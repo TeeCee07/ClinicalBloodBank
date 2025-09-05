@@ -52,6 +52,7 @@ C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\Microsoft.Web.Infrastructure.
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\MySql.Data.dll
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\Newtonsoft.Json.dll
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Buffers.dll
+C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.CodeDom.dll
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Configuration.ConfigurationManager.dll
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Diagnostics.DiagnosticSource.dll
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.IO.Pipelines.dll
@@ -72,6 +73,7 @@ C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\Microsoft.Bcl.AsyncInterfaces
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\MySql.Data.xml
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Buffers.xml
+C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.CodeDom.xml
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Configuration.ConfigurationManager.xml
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.Diagnostics.DiagnosticSource.xml
 C:\Users\TeeCee\Source\Repos\ClinicalBloodBank\bin\System.IO.Pipelines.xml
