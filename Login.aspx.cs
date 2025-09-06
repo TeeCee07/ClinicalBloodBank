@@ -7,11 +7,14 @@ namespace ClinicalBloodBank
 {
     public partial class Login : System.Web.UI.Page
     {
+        private string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
                 Session.Clear();
+                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] Page_Load: Session cleared");
             }
         }
 
@@ -20,15 +23,19 @@ namespace ClinicalBloodBank
             string email = txtEmail.Text.Trim();
             string password = txtPassword.Text;
 
+            System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] btnLogin_Click: Attempting login with email={email}");
+
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 ShowAlert("Email and password are required.", "danger");
+                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] btnLogin_Click: Empty email or password");
                 return;
             }
 
             if (AuthenticateUser(email, password))
             {
                 string userType = Session["UserType"] as string;
+                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] btnLogin_Click: Authenticated user, type={userType}, UserId={Session["UserId"]}, UserName={Session["UserName"]}");
                 switch (userType)
                 {
                     case "donor":
@@ -42,24 +49,25 @@ namespace ClinicalBloodBank
                         break;
                     default:
                         ShowAlert("Unknown user type. Please contact support.", "danger");
+                        System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] btnLogin_Click: Unknown user type={userType}");
                         break;
                 }
             }
             else
             {
                 ShowAlert("Invalid login credentials. Please try again.", "danger");
+                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] btnLogin_Click: Authentication failed for email={email}");
             }
         }
 
         private bool AuthenticateUser(string email, string password)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
+                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Database connection opened");
 
                     // Check donors table
                     string donorQuery = "SELECT donor_id, first_name, last_name FROM donors WHERE email = @email AND password = @password AND is_active = 1";
@@ -67,6 +75,7 @@ namespace ClinicalBloodBank
                     {
                         cmd.Parameters.AddWithValue("@email", email);
                         cmd.Parameters.AddWithValue("@password", password);
+                        System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Executing donor query for email={email}");
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -75,12 +84,12 @@ namespace ClinicalBloodBank
                                 string fullName = $"{reader["first_name"]} {reader["last_name"]}";
                                 reader.Close();
 
-                                // Update last_login
                                 string updateQuery = "UPDATE donors SET last_login = NOW() WHERE donor_id = @donorId";
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@donorId", donorId);
                                     updateCmd.ExecuteNonQuery();
+                                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Updated last_login for donor_id={donorId}");
                                 }
 
                                 AddNotification(Convert.ToInt32(donorId), null, null, $"Donor {fullName} logged in");
@@ -98,6 +107,7 @@ namespace ClinicalBloodBank
                     {
                         cmd.Parameters.AddWithValue("@email", email);
                         cmd.Parameters.AddWithValue("@password", password);
+                        System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Executing admin query for email={email}");
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -106,12 +116,12 @@ namespace ClinicalBloodBank
                                 string fullName = $"{reader["first_name"]} {reader["last_name"]}";
                                 reader.Close();
 
-                                // Update last_login
                                 string updateQuery = "UPDATE admins SET last_login = NOW() WHERE admin_id = @adminId";
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@adminId", adminId);
                                     updateCmd.ExecuteNonQuery();
+                                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Updated last_login for admin_id={adminId}");
                                 }
 
                                 AddNotification(null, Convert.ToInt32(adminId), null, $"Admin {fullName} logged in");
@@ -131,6 +141,7 @@ namespace ClinicalBloodBank
                     {
                         cmd.Parameters.AddWithValue("@email", email);
                         cmd.Parameters.AddWithValue("@password", password);
+                        System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Executing hospital query for email={email}");
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -139,12 +150,12 @@ namespace ClinicalBloodBank
                                 string hospitalName = reader["hospital_name"].ToString();
                                 reader.Close();
 
-                                // Update last_login
                                 string updateQuery = "UPDATE hospitals SET last_login = NOW() WHERE hospital_id = @hospitalId";
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@hospitalId", hospitalId);
                                     updateCmd.ExecuteNonQuery();
+                                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: Updated last_login for hospital_id={hospitalId}");
                                 }
 
                                 AddNotification(null, null, Convert.ToInt32(hospitalId), $"Hospital {hospitalName} logged in");
@@ -153,13 +164,22 @@ namespace ClinicalBloodBank
                                 Session["UserName"] = hospitalName;
                                 return true;
                             }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: No hospital found for email={email}, is_verified=1");
+                            }
                         }
                     }
                 }
+                catch (MySqlException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: MySQL error - Code: {ex.Number}, Message: {ex.Message}");
+                    ShowAlert($"Database error during login: {ex.Message}", "danger");
+                }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("Authentication error: " + ex.Message);
-                    ShowAlert("Error during login: " + ex.Message, "danger");
+                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AuthenticateUser: General error - {ex.Message}");
+                    ShowAlert($"Error during login: {ex.Message}", "danger");
                 }
             }
 
@@ -168,7 +188,6 @@ namespace ClinicalBloodBank
 
         private void AddNotification(int? donorId, int? adminId, int? hospitalId, string message)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 try
@@ -183,11 +202,12 @@ namespace ClinicalBloodBank
                         cmd.Parameters.AddWithValue("@hospitalId", hospitalId ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@message", message);
                         cmd.ExecuteNonQuery();
+                        System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AddNotification: Notification added - {message}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("AddNotification error: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine($"[{DateTime.Now}] AddNotification: Error - {ex.Message}");
                 }
             }
         }
