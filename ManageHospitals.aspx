@@ -409,7 +409,7 @@
                     <label for="txtAddressLine1" class="required-field">Address Line 1</label>
                     <asp:TextBox ID="txtAddressLine1" runat="server" CssClass="form-control" />
                     <asp:RequiredFieldValidator ID="rfvAddressLine1" runat="server" ControlToValidate="txtAddressLine1"
-                        ErrorMessage="Address is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                        ErrorMessage="Address Line 1 is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                 </div>
                 
                 <div class="form-group">
@@ -439,10 +439,8 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="txtPostalCode" class="required-field">Postal Code</label>
+                            <label for="txtPostalCode">Postal Code</label>
                             <asp:TextBox ID="txtPostalCode" runat="server" CssClass="form-control" />
-                            <asp:RequiredFieldValidator ID="rfvPostalCode" runat="server" ControlToValidate="txtPostalCode"
-                                ErrorMessage="Postal code is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                             <asp:RegularExpressionValidator ID="revPostalCode" runat="server" ControlToValidate="txtPostalCode"
                                 ValidationExpression="^\d{4}$" ErrorMessage="Postal code must be 4 digits" Display="Dynamic" CssClass="text-danger"></asp:RegularExpressionValidator>
                         </div>
@@ -460,32 +458,13 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="txtContactPerson" class="required-field">Contact Person</label>
-                            <asp:TextBox ID="txtContactPerson" runat="server" CssClass="form-control" />
-                            <asp:RequiredFieldValidator ID="rfvContactPerson" runat="server" ControlToValidate="txtContactPerson"
-                                ErrorMessage="Contact person is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="txtEmail" class="required-field">Email</label>
+                            <label for="txtEmail" class="required-field">Contact Email</label>
                             <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email" />
                             <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtEmail"
-                                ErrorMessage="Email is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Contact email is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                             <asp:RegularExpressionValidator ID="revEmail" runat="server" ControlToValidate="txtEmail"
                                 ValidationExpression="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                                 ErrorMessage="Please enter a valid email address" Display="Dynamic" CssClass="text-danger"></asp:RegularExpressionValidator>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="txtPhone" class="required-field">Phone</label>
-                            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" />
-                            <asp:RequiredFieldValidator ID="rfvPhone" runat="server" ControlToValidate="txtPhone"
-                                ErrorMessage="Phone number is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                         </div>
                     </div>
                     <div class="form-col">
@@ -518,9 +497,7 @@
                         <asp:ListItem Value="all">All Fields</asp:ListItem>
                         <asp:ListItem Value="hospital_name">Hospital Name</asp:ListItem>
                         <asp:ListItem Value="license_number">License Number</asp:ListItem>
-                        <asp:ListItem Value="email">Email</asp:ListItem>
-                        <asp:ListItem Value="phone">Phone</asp:ListItem>
-                        <asp:ListItem Value="contact_person">Contact Person</asp:ListItem>
+                        <asp:ListItem Value="contact_email">Contact Email</asp:ListItem>
                         <asp:ListItem Value="city">City</asp:ListItem>
                         <asp:ListItem Value="province">Province</asp:ListItem>
                         <asp:ListItem Value="postal_code">Postal Code</asp:ListItem>
@@ -540,11 +517,14 @@
                     CssClass="table table-striped" AllowPaging="True" PageSize="10">
                     <Columns>
                         <asp:BoundField DataField="hospital_name" HeaderText="Hospital Name" />
-                        <asp:BoundField DataField="license_number" HeaderText="License Number" />
-                        <asp:BoundField DataField="contact_person" HeaderText="Contact Person" />
-                        <asp:BoundField DataField="email" HeaderText="Email" />
-                        <asp:BoundField DataField="phone" HeaderText="Phone" />
+                        <asp:BoundField DataField="address_line1" HeaderText="Address Line 1" />
+                        <asp:BoundField DataField="address_line2" HeaderText="Address Line 2" />
                         <asp:BoundField DataField="city" HeaderText="City" />
+                        <asp:BoundField DataField="province" HeaderText="Province" />
+                        <asp:BoundField DataField="postal_code" HeaderText="Postal Code" />
+                        <asp:BoundField DataField="country" HeaderText="Country" />
+                        <asp:BoundField DataField="license_number" HeaderText="License Number" />
+                        <asp:BoundField DataField="contact_email" HeaderText="Contact Email" />
                         <asp:TemplateField HeaderText="Verified">
                             <ItemTemplate>
                                 <asp:CheckBox ID="chkVerified" runat="server" Checked='<%# Eval("is_verified") %>'

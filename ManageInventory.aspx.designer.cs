@@ -42,6 +42,24 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Literal litUserName;
 
         /// <summary>
+        /// pnlMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlMessage;
+
+        /// <summary>
+        /// lblMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMessage;
+
+        /// <summary>
         /// hdnInventoryId control.
         /// </summary>
         /// <remarks>
@@ -60,6 +78,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.DropDownList ddlInventoryBloodType;
 
         /// <summary>
+        /// rfvBloodType control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvBloodType;
+
+        /// <summary>
         /// txtQuantity control.
         /// </summary>
         /// <remarks>
@@ -67,6 +94,24 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtQuantity;
+
+        /// <summary>
+        /// rfvQuantity control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvQuantity;
+
+        /// <summary>
+        /// revQuantity control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator revQuantity;
 
         /// <summary>
         /// txtDonationDate control.
@@ -78,13 +123,22 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.TextBox txtDonationDate;
 
         /// <summary>
-        /// txtExpirationDate control.
+        /// rfvDonationDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtExpirationDate;
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvDonationDate;
+
+        /// <summary>
+        /// lblExpirationDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblExpirationDate;
 
         /// <summary>
         /// ddlDonor control.
@@ -96,6 +150,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.DropDownList ddlDonor;
 
         /// <summary>
+        /// rfvDonor control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvDonor;
+
+        /// <summary>
         /// ddlHospital control.
         /// </summary>
         /// <remarks>
@@ -103,6 +166,15 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlHospital;
+
+        /// <summary>
+        /// rfvHospital control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvHospital;
 
         /// <summary>
         /// ddlTestResult control.
@@ -114,6 +186,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.DropDownList ddlTestResult;
 
         /// <summary>
+        /// rfvTestResult control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvTestResult;
+
+        /// <summary>
         /// ddlStatus control.
         /// </summary>
         /// <remarks>
@@ -121,6 +202,15 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
+
+        /// <summary>
+        /// rfvStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvStatus;
 
         /// <summary>
         /// btnSaveInventory control.
@@ -139,6 +229,51 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnClearForm;
+
+        /// <summary>
+        /// ddlFilterBloodType control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterBloodType;
+
+        /// <summary>
+        /// txtFilterExpirationDate control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtFilterExpirationDate;
+
+        /// <summary>
+        /// ddlFilterProvince control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterProvince;
+
+        /// <summary>
+        /// btnFilter control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnFilter;
+
+        /// <summary>
+        /// btnClearFilter control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnClearFilter;
 
         /// <summary>
         /// gvInventory control.

@@ -74,8 +74,8 @@ namespace ClinicalBloodBank
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    string query = @"SELECT hospital_id, hospital_name, license_number, contact_person, email, phone, 
-                                    address_line1, address_line2, city, province, postal_code, country, is_verified 
+                    string query = @"SELECT hospital_id, hospital_name, address_line1, address_line2, city, province, 
+                                    postal_code, country, license_number, contact_email, contact_password, is_verified 
                                     FROM hospitals 
                                     WHERE 1=1";
 
@@ -88,7 +88,7 @@ namespace ClinicalBloodBank
 
                     if (!string.IsNullOrEmpty(searchText))
                     {
-                        string[] validSearchFields = { "all", "hospital_name", "license_number", "email", "phone", "contact_person", "city", "province", "postal_code" };
+                        string[] validSearchFields = { "all", "hospital_name", "license_number", "contact_email", "city", "province", "postal_code" };
                         if (!Array.Exists(validSearchFields, field => field == searchBy))
                         {
                             ShowMessage("Invalid search field selected.", "danger");
@@ -98,7 +98,7 @@ namespace ClinicalBloodBank
 
                         if (searchBy == "all")
                         {
-                            query += " AND (hospital_name LIKE @Search OR license_number LIKE @Search OR contact_person LIKE @Search OR email LIKE @Search OR phone LIKE @Search OR city LIKE @Search OR province LIKE @Search OR postal_code LIKE @Search)";
+                            query += " AND (hospital_name LIKE @Search OR license_number LIKE @Search OR contact_email LIKE @Search OR city LIKE @Search OR province LIKE @Search OR postal_code LIKE @Search)";
                         }
                         else
                         {
@@ -179,10 +179,10 @@ namespace ClinicalBloodBank
 
                     if (isNew)
                     {
-                        string checkEmailQuery = "SELECT COUNT(*) FROM hospitals WHERE email = @Email";
+                        string checkEmailQuery = "SELECT COUNT(*) FROM hospitals WHERE contact_email = @ContactEmail";
                         using (MySqlCommand checkCmd = new MySqlCommand(checkEmailQuery, conn))
                         {
-                            checkCmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+                            checkCmd.Parameters.AddWithValue("@ContactEmail", txtEmail.Text.Trim());
                             long count = (long)checkCmd.ExecuteScalar();
                             if (count > 0)
                             {
@@ -193,11 +193,11 @@ namespace ClinicalBloodBank
                         }
 
                         string insertQuery = @"INSERT INTO hospitals 
-                            (hospital_name, license_number, password, contact_person, email, phone, 
-                             address_line1, address_line2, city, province, postal_code, country, is_verified) 
+                            (hospital_name, address_line1, address_line2, city, province, postal_code, country, 
+                             license_number, contact_email, contact_password, is_verified) 
                             VALUES 
-                            (@HospitalName, @LicenseNumber, @Password, @ContactPerson, @Email, @Phone, 
-                             @Address1, @Address2, @City, @Province, @PostalCode, @Country, @IsVerified)";
+                            (@HospitalName, @Address1, @Address2, @City, @Province, @PostalCode, @Country, 
+                             @LicenseNumber, @ContactEmail, @ContactPassword, @IsVerified)";
 
                         using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
                         {
@@ -218,16 +218,15 @@ namespace ClinicalBloodBank
                     {
                         string updateQuery = @"UPDATE hospitals SET 
                             hospital_name = @HospitalName,
-                            license_number = @LicenseNumber,
-                            contact_person = @ContactPerson,
-                            email = @Email,
-                            phone = @Phone,
                             address_line1 = @Address1,
                             address_line2 = @Address2,
                             city = @City,
                             province = @Province,
                             postal_code = @PostalCode,
                             country = @Country,
+                            license_number = @LicenseNumber,
+                            contact_email = @ContactEmail,
+                            contact_password = @ContactPassword,
                             is_verified = @IsVerified
                             WHERE hospital_id = @HospitalId";
 
@@ -269,7 +268,7 @@ namespace ClinicalBloodBank
             {
                 string query = @"INSERT INTO notifications 
                                 (donor_id, admin_id, hospital_id, title, message, is_read, created_at)
-                                VALUES (@DonorId, @AdminId, @HospitalId, @Title, @Message, 0, @CreatedAt)";
+                                VALUES (@DonorId, @AdminId, @HospitalId, @Title, @Message, 0, NOW())";
 
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
@@ -278,7 +277,6 @@ namespace ClinicalBloodBank
                     cmd.Parameters.AddWithValue("@HospitalId", hospitalId.HasValue ? (object)hospitalId.Value : DBNull.Value);
                     cmd.Parameters.AddWithValue("@Title", title);
                     cmd.Parameters.AddWithValue("@Message", message);
-                    cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -291,22 +289,16 @@ namespace ClinicalBloodBank
         private void AddHospitalParameters(MySqlCommand cmd, bool isNew)
         {
             cmd.Parameters.AddWithValue("@HospitalName", txtHospitalName.Text.Trim());
-            cmd.Parameters.AddWithValue("@LicenseNumber", txtLicenseNumber.Text.Trim());
-            cmd.Parameters.AddWithValue("@ContactPerson", txtContactPerson.Text.Trim());
-            cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
-            cmd.Parameters.AddWithValue("@Phone", txtPhone.Text.Trim());
-            cmd.Parameters.AddWithValue("@Address1", txtAddressLine1.Text.Trim());
+            cmd.Parameters.AddWithValue("@Address1", string.IsNullOrEmpty(txtAddressLine1.Text) ? DBNull.Value : (object)txtAddressLine1.Text.Trim());
             cmd.Parameters.AddWithValue("@Address2", string.IsNullOrEmpty(txtAddressLine2.Text) ? DBNull.Value : (object)txtAddressLine2.Text.Trim());
             cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
             cmd.Parameters.AddWithValue("@Province", txtProvince.Text.Trim());
-            cmd.Parameters.AddWithValue("@PostalCode", txtPostalCode.Text.Trim());
+            cmd.Parameters.AddWithValue("@PostalCode", string.IsNullOrEmpty(txtPostalCode.Text) ? DBNull.Value : (object)txtPostalCode.Text.Trim());
             cmd.Parameters.AddWithValue("@Country", txtCountry.Text.Trim());
+            cmd.Parameters.AddWithValue("@LicenseNumber", txtLicenseNumber.Text.Trim());
+            cmd.Parameters.AddWithValue("@ContactEmail", txtEmail.Text.Trim());
+            cmd.Parameters.AddWithValue("@ContactPassword", txtHospitalPassword.Text.Trim());
             cmd.Parameters.AddWithValue("@IsVerified", cbIsVerified.Checked);
-
-            if (isNew)
-            {
-                cmd.Parameters.AddWithValue("@Password", txtHospitalPassword.Text.Trim());
-            }
         }
 
         protected void btnClearForm_Click(object sender, EventArgs e)
@@ -320,16 +312,14 @@ namespace ClinicalBloodBank
             hdnHospitalId.Value = "";
             txtHospitalName.Text = "";
             txtLicenseNumber.Text = "";
-            txtContactPerson.Text = "";
             txtEmail.Text = "";
-            txtPhone.Text = "";
+            txtHospitalPassword.Text = "";
             txtAddressLine1.Text = "";
             txtAddressLine2.Text = "";
             txtCity.Text = "";
             txtProvince.Text = "";
             txtPostalCode.Text = "";
             txtCountry.Text = "South Africa";
-            txtHospitalPassword.Text = "";
             cbIsVerified.Checked = true;
             passwordSection.Visible = true;
             rfvPassword.Enabled = true;
@@ -349,8 +339,8 @@ namespace ClinicalBloodBank
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    string query = @"SELECT hospital_id, hospital_name, license_number, contact_person, email, phone, 
-                                    address_line1, address_line2, city, province, postal_code, country, is_verified 
+                    string query = @"SELECT hospital_id, hospital_name, address_line1, address_line2, city, province, 
+                                    postal_code, country, license_number, contact_email, contact_password, is_verified 
                                     FROM hospitals WHERE hospital_id = @HospitalId";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
@@ -364,19 +354,18 @@ namespace ClinicalBloodBank
                             {
                                 hdnHospitalId.Value = reader["hospital_id"].ToString();
                                 txtHospitalName.Text = reader["hospital_name"].ToString();
-                                txtLicenseNumber.Text = reader["license_number"].ToString();
-                                txtContactPerson.Text = reader["contact_person"].ToString();
-                                txtEmail.Text = reader["email"].ToString();
-                                txtPhone.Text = reader["phone"].ToString();
                                 txtAddressLine1.Text = reader["address_line1"].ToString();
                                 txtAddressLine2.Text = reader["address_line2"].ToString();
                                 txtCity.Text = reader["city"].ToString();
                                 txtProvince.Text = reader["province"].ToString();
                                 txtPostalCode.Text = reader["postal_code"].ToString();
                                 txtCountry.Text = reader["country"].ToString();
+                                txtLicenseNumber.Text = reader["license_number"].ToString();
+                                txtEmail.Text = reader["contact_email"].ToString();
+                                txtHospitalPassword.Text = reader["contact_password"].ToString();
                                 cbIsVerified.Checked = Convert.ToBoolean(reader["is_verified"]);
-                                passwordSection.Visible = false;
-                                rfvPassword.Enabled = false;
+                                passwordSection.Visible = true;
+                                rfvPassword.Enabled = false; // Password optional for updates
                             }
                         }
                     }

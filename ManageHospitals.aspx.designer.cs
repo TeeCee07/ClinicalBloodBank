@@ -177,15 +177,6 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.TextBox txtPostalCode;
 
         /// <summary>
-        /// rfvPostalCode control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvPostalCode;
-
-        /// <summary>
         /// revPostalCode control.
         /// </summary>
         /// <remarks>
@@ -213,24 +204,6 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvCountry;
 
         /// <summary>
-        /// txtContactPerson control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtContactPerson;
-
-        /// <summary>
-        /// rfvContactPerson control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvContactPerson;
-
-        /// <summary>
         /// txtEmail control.
         /// </summary>
         /// <remarks>
@@ -256,24 +229,6 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.RegularExpressionValidator revEmail;
-
-        /// <summary>
-        /// txtPhone control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPhone;
-
-        /// <summary>
-        /// rfvPhone control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvPhone;
 
         /// <summary>
         /// passwordSection control.
