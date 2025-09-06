@@ -24,6 +24,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
+        /// lnkLogout control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton lnkLogout;
+
+        /// <summary>
         /// litUserName control.
         /// </summary>
         /// <remarks>
@@ -69,22 +78,31 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Literal litUserInitials;
 
         /// <summary>
-        /// litUserRole control.
+        /// lnkProfileLogout control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litUserRole;
+        protected global::System.Web.UI.WebControls.LinkButton lnkProfileLogout;
 
         /// <summary>
-        /// errorMessage control.
+        /// pnlMessage control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl errorMessage;
+        protected global::System.Web.UI.WebControls.Panel pnlMessage;
+
+        /// <summary>
+        /// lblMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
         /// litTotalDonors control.
@@ -123,13 +141,13 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Literal litPendingRequests;
 
         /// <summary>
-        /// rptNotifications control.
+        /// gvNotifications control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater rptNotifications;
+        protected global::System.Web.UI.WebControls.GridView gvNotifications;
 
         /// <summary>
         /// lblNoNotifications control.
