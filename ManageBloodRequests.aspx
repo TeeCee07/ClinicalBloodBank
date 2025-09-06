@@ -1,5 +1,4 @@
-﻿
-<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageBloodRequests.aspx.cs" Inherits="ClinicalBloodBank.ManageBloodRequests" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageBloodRequests.aspx.cs" Inherits="ClinicalBloodBank.ManageBloodRequests" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -380,7 +379,7 @@
                             <label for="ddlFulfillHospital" class="required-field">Fulfilled By Hospital</label>
                             <asp:DropDownList ID="ddlFulfillHospital" runat="server" CssClass="form-control" />
                             <asp:RequiredFieldValidator ID="rfvFulfillHospital" runat="server" ControlToValidate="ddlFulfillHospital"
-                                ErrorMessage="Fulfilling hospital is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Fulfilling hospital is required" Display="Dynamic" CssClass="text-danger" Enabled="false"></asp:RequiredFieldValidator>
                         </div>
                     </div>
                 </div>
@@ -478,8 +477,30 @@
                 </asp:GridView>
             </div>
         </div>
+
+        <!-- JavaScript for dynamic validation -->
+        <script>
+            function toggleHospitalValidation() {
+                var status = document.getElementById('<%= ddlRequestStatus.ClientID %>').value;
+                var hospitalValidator = document.getElementById('<%= rfvFulfillHospital.ClientID %>');
+                
+                if (status === 'approved' || status === 'fulfilled') {
+                    hospitalValidator.enabled = true;
+                    hospitalValidator.style.display = 'block';
+                } else {
+                    hospitalValidator.enabled = false;
+                    hospitalValidator.style.display = 'none';
+                }
+            }
+            
+            // Attach the event handler
+            document.getElementById('<%= ddlRequestStatus.ClientID %>').onchange = toggleHospitalValidation;
+
+            // Initialize on page load
+            window.onload = function () {
+                toggleHospitalValidation();
+            };
+        </script>
     </form>
 </body>
 </html>
-
-

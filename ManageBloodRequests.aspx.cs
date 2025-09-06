@@ -301,28 +301,51 @@ namespace ClinicalBloodBank
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"UPDATE blood_requests SET status = @status, fulfilled_by_hospital = @hospitalId, 
-                                  patient_details = @notes, fulfilled_at = CASE WHEN @status IN ('approved', 'fulfilled') THEN CURRENT_TIMESTAMP ELSE NULL END
-                                  WHERE request_id = @requestId";
+                    string query = @"UPDATE blood_requests SET status = @status, 
+                          fulfilled_by_hospital = @hospitalId, 
+                          patient_details = @notes, 
+                          fulfilled_at = CASE WHEN @status IN ('approved', 'fulfilled') THEN CURRENT_TIMESTAMP ELSE NULL END
+                          WHERE request_id = @requestId";
+
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@status", ddlRequestStatus.SelectedValue);
-                        cmd.Parameters.AddWithValue("@hospitalId", string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue) ? (object)DBNull.Value : ddlFulfillHospital.SelectedValue);
+
+                        // Handle null hospital for non-approved statuses
+                        if (string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue))
+                        {
+                            cmd.Parameters.AddWithValue("@hospitalId", DBNull.Value);
+                        }
+                        else
+                        {
+                            cmd.Parameters.AddWithValue("@hospitalId", ddlFulfillHospital.SelectedValue);
+                        }
+
                         cmd.Parameters.AddWithValue("@notes", txtRequestNotes.Text);
                         cmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
                         cmd.ExecuteNonQuery();
                     }
 
+                    // Only update inventory for approved requests
                     if (ddlRequestStatus.SelectedValue == "approved")
                     {
                         if (!UpdateInventoryForRequest())
                         {
-                            ShowMessage("Insufficient inventory to fulfill this request.", "danger");
+                            // Revert status if inventory is insufficient
+                            string revertQuery = "UPDATE blood_requests SET status = 'pending' WHERE request_id = @requestId";
+                            using (MySqlCommand revertCmd = new MySqlCommand(revertQuery, conn))
+                            {
+                                revertCmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
+                                revertCmd.ExecuteNonQuery();
+                            }
+
+                            ShowMessage("Insufficient inventory to fulfill this request. Status reverted to pending.", "danger");
                             return;
                         }
                     }
 
-                    AddNotification(Convert.ToInt32(Session["AdminId"]), "Request Processed", $"Blood request {hdnRequestId.Value} has been {ddlRequestStatus.SelectedValue}");
+                    AddNotification(Convert.ToInt32(Session["AdminId"]), "Request Processed",
+                                   $"Blood request {hdnRequestId.Value} has been {ddlRequestStatus.SelectedValue}");
                     ShowMessage("Request processed successfully.", "success");
                     LoadBloodRequests();
                     ClearForm();
@@ -371,11 +394,16 @@ namespace ClinicalBloodBank
                 ShowMessage("Status is required.", "danger");
                 return false;
             }
-            if (string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue))
+
+            // Only require hospital selection for approved/fulfilled status
+            if ((ddlRequestStatus.SelectedValue == "approved" ||
+                 ddlRequestStatus.SelectedValue == "fulfilled") &&
+                string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue))
             {
-                ShowMessage("Fulfilling hospital is required.", "danger");
+                ShowMessage("Fulfilling hospital is required for approved/fulfilled requests.", "danger");
                 return false;
             }
+
             return true;
         }
 
