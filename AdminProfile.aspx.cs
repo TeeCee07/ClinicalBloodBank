@@ -1,297 +1,215 @@
 ﻿using System;
-using System.Data;
-using System.IO;
-using System.Web;
+using System.Configuration;
+using System.Collections.Generic;
+using MySql.Data.MySqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using MySql.Data.MySqlClient;
+using System.Diagnostics;
 
 namespace ClinicalBloodBank
 {
     public partial class AdminProfile : System.Web.UI.Page
     {
+        private string connectionString = ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
+        private List<string> controlsToRegister = new List<string>();
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (Session["AdminId"] == null)
             {
-                // Validate session and authentication
-                if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != "admin")
-                {
-                    Response.Redirect("Login.aspx");
-                    return;
-                }
-
-                LoadUserProfile();
-            }
-        }
-
-        private void LoadUserProfile()
-        {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                ShowErrorMessage("Database connection configuration is missing.");
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Missing session variable: AdminId");
+                Response.Redirect("Login.aspx");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                this.PreRender += new EventHandler(Page_PreRender);
+                controlsToRegister.Add(btnSaveChanges.UniqueID);
+                controlsToRegister.Add(btnCancel.UniqueID);
+                controlsToRegister.Add(lnkLogout.UniqueID);
+
+                if (!IsPostBack)
+                {
+                    LoadUserInfo();
+                    LoadAdminDetails();
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - MySQL Error: {ex.Message}");
+                ShowMessage("Database error: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Error: {ex.Message}");
+                ShowMessage("Error: " + ex.Message, "danger");
+            }
+        }
+
+        private void LoadUserInfo()
+        {
+            if (Session["AdminName"] != null)
+            {
+                string adminName = Session["AdminName"].ToString();
+                litUserName.Text = adminName;
+                string[] nameParts = adminName.Split(' ');
+                string initials = nameParts[0][0].ToString() + (nameParts.Length > 1 ? nameParts[1][0].ToString() : "");
+                litUserInitials.Text = initials.ToUpper();
+                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - AdminName: {adminName}, Initials: {initials}");
+            }
+            else
+            {
+                litUserName.Text = "Administrator";
+                litUserInitials.Text = "AD";
+            }
+        }
+
+        private void LoadAdminDetails()
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                ShowMessage("Database connection configuration is missing.", "danger");
+                return;
+            }
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    // Get user details from database
-                    string userQuery = "SELECT first_name, last_name, email, phone, address_line1, address_line2, " +
-                                      "city, state, postal_code, country, profile_picture " +
-                                      "FROM users WHERE user_id = @userId";
-                    using (MySqlCommand cmd = new MySqlCommand(userQuery, conn))
+                    string query = "SELECT first_name, last_name, email FROM admins WHERE admin_id = @adminId";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@userId", Session["UserId"]);
-
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                // Populate form fields
                                 txtFirstName.Text = reader["first_name"].ToString();
                                 txtLastName.Text = reader["last_name"].ToString();
                                 txtEmail.Text = reader["email"].ToString();
-                                txtPhone.Text = reader["phone"].ToString();
-                                txtAddress1.Text = reader["address_line1"].ToString();
-                                txtAddress2.Text = reader["address_line2"].ToString();
-                                txtCity.Text = reader["city"].ToString();
-                                txtState.Text = reader["state"].ToString();
-                                txtPostalCode.Text = reader["postal_code"].ToString();
-                                txtCountry.Text = reader["country"].ToString();
-
-                                // Set header user name
-                                litHeaderUserName.Text = reader["first_name"].ToString() + " " + reader["last_name"].ToString();
-
-                                // Handle profile picture
-                                string profilePicture = reader["profile_picture"].ToString();
-                                if (!string.IsNullOrEmpty(profilePicture))
-                                {
-                                    imgProfile.ImageUrl = profilePicture;
-                                    imgProfile.Visible = true;
-                                    profilePlaceholder.Visible = false;
-
-                                    // Set header avatar
-                                    headerAvatar.Style["background-image"] = $"url('{profilePicture}')";
-                                    headerAvatar.InnerText = "";
-                                }
-                                else
-                                {
-                                    imgProfile.Visible = false;
-                                    profilePlaceholder.Visible = true;
-                                    profilePlaceholder.InnerText = reader["first_name"].ToString().Substring(0, 1) +
-                                                                   reader["last_name"].ToString().Substring(0, 1);
-
-                                    // Set header avatar with initials
-                                    headerAvatar.Style["background-image"] = "none";
-                                    headerAvatar.InnerText = reader["first_name"].ToString().Substring(0, 1) +
-                                                            reader["last_name"].ToString().Substring(0, 1);
-                                }
                             }
                             else
                             {
-                                ShowErrorMessage("User profile not found.");
+                                ShowMessage("Admin profile not found.", "danger");
                             }
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadUserProfile Error: " + ex.Message);
-                    ShowErrorMessage("Error loading user profile.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadAdminDetails - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading profile: " + ex.Message, "danger");
             }
         }
 
-        protected void btnSave_Click(object sender, EventArgs e)
+        protected void btnSaveChanges_Click(object sender, EventArgs e)
         {
-            if (!Page.IsValid)
-                return;
-
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
+            if (!Page.IsValid) return;
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                ShowErrorMessage("Database connection configuration is missing.");
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    // Handle profile picture upload
-                    string profilePicturePath = null;
-                    if (fileProfile.HasFile)
-                    {
-                        profilePicturePath = SaveUploadedFile(fileProfile.PostedFile);
-                    }
-
-                    // Update user details
-                    string updateQuery = "UPDATE users SET first_name = @firstName, last_name = @lastName, " +
-                                        "email = @email, phone = @phone, address_line1 = @address1, " +
-                                        "address_line2 = @address2, city = @city, state = @state, " +
-                                        "postal_code = @postalCode, country = @country " +
-                                        (profilePicturePath != null ? ", profile_picture = @profilePicture " : "") +
-                                        "WHERE user_id = @userId";
-
-                    using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
+                    string query = @"UPDATE admins SET first_name = @firstName, last_name = @lastName, 
+                                    email = @email, password = @password
+                                    WHERE admin_id = @adminId";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@firstName", txtFirstName.Text);
                         cmd.Parameters.AddWithValue("@lastName", txtLastName.Text);
                         cmd.Parameters.AddWithValue("@email", txtEmail.Text);
-                        cmd.Parameters.AddWithValue("@phone", txtPhone.Text);
-                        cmd.Parameters.AddWithValue("@address1", txtAddress1.Text);
-                        cmd.Parameters.AddWithValue("@address2", txtAddress2.Text);
-                        cmd.Parameters.AddWithValue("@city", txtCity.Text);
-                        cmd.Parameters.AddWithValue("@state", txtState.Text);
-                        cmd.Parameters.AddWithValue("@postalCode", txtPostalCode.Text);
-                        cmd.Parameters.AddWithValue("@country", txtCountry.Text);
-                        cmd.Parameters.AddWithValue("@userId", Session["UserId"]);
-
-                        if (profilePicturePath != null)
-                        {
-                            cmd.Parameters.AddWithValue("@profilePicture", profilePicturePath);
-                        }
-
+                        cmd.Parameters.AddWithValue("@password", txtPassword.Text);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected > 0)
                         {
-                            // Update session variables
-                            Session["FirstName"] = txtFirstName.Text;
-                            Session["LastName"] = txtLastName.Text;
-                            Session["Email"] = txtEmail.Text;
-
-                            ShowSuccessMessage("Profile updated successfully!");
-
-                            // Reload profile to reflect changes
-                            LoadUserProfile();
+                            Session["AdminName"] = $"{txtFirstName.Text} {txtLastName.Text}";
+                            LoadUserInfo();
+                            AddNotification(Convert.ToInt32(Session["AdminId"]), "Profile Updated", "Your profile details have been updated.");
+                            ShowMessage("Profile updated successfully.", "success");
                         }
                         else
                         {
-                            ShowErrorMessage("Failed to update profile.");
+                            ShowMessage("No changes made to the profile.", "info");
                         }
                     }
                 }
-                catch (MySqlException ex) when (ex.Number == 1062) // Duplicate entry
-                {
-                    ShowErrorMessage("This email address is already registered.");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("btnSave_Click Error: " + ex.Message);
-                    ShowErrorMessage("Error updating profile.");
-                }
             }
-        }
-
-        protected void btnRemovePicture_Click(object sender, EventArgs e)
-        {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
-            if (string.IsNullOrEmpty(connectionString))
+            catch (MySqlException ex)
             {
-                ShowErrorMessage("Database connection configuration is missing.");
-                return;
-            }
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
-            {
-                try
-                {
-                    conn.Open();
-
-                    // Remove profile picture
-                    string updateQuery = "UPDATE users SET profile_picture = NULL WHERE user_id = @userId";
-                    using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@userId", Session["UserId"]);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    ShowSuccessMessage("Profile picture removed successfully!");
-
-                    // Reload profile to reflect changes
-                    LoadUserProfile();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("btnRemovePicture_Click Error: " + ex.Message);
-                    ShowErrorMessage("Error removing profile picture.");
-                }
+                Debug.WriteLine($"[{DateTime.Now}] btnSaveChanges_Click - MySQL Error: {ex.Message}");
+                ShowMessage("Error updating profile: " + ex.Message, "danger");
             }
         }
 
         protected void btnCancel_Click(object sender, EventArgs e)
         {
-            Response.Redirect("AdminDashboard.aspx");
+            LoadAdminDetails();
+            ShowMessage("Form reset to current profile details.", "info");
         }
 
-        protected void cvProfilePicture_ServerValidate(object source, ServerValidateEventArgs args)
+        protected void lnkLogout_Click(object sender, EventArgs e)
         {
-            if (!fileProfile.HasFile)
-            {
-                args.IsValid = true; // No file is acceptable
-                return;
-            }
-
-            // Check file type
-            string fileExtension = Path.GetExtension(fileProfile.FileName).ToLower();
-            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
-
-            args.IsValid = Array.IndexOf(allowedExtensions, fileExtension) >= 0;
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("Login.aspx");
         }
 
-        private string SaveUploadedFile(HttpPostedFile file)
+        private void AddNotification(int adminId, string title, string message)
         {
             try
             {
-                string uploadFolder = Server.MapPath("~/Uploads/ProfilePictures/");
-
-                // Create directory if it doesn't exist
-                if (!Directory.Exists(uploadFolder))
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    Directory.CreateDirectory(uploadFolder);
+                    conn.Open();
+                    string query = @"INSERT INTO notifications (admin_id, title, message, is_read, created_at) 
+                                    VALUES (@adminId, @title, @message, 0, CURRENT_TIMESTAMP)";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@adminId", adminId);
+                        cmd.Parameters.AddWithValue("@title", title);
+                        cmd.Parameters.AddWithValue("@message", message);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-
-                // Generate unique filename
-                string fileExtension = Path.GetExtension(file.FileName);
-                string fileName = $"admin_{Session["UserId"]}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
-                string filePath = Path.Combine(uploadFolder, fileName);
-
-                // Save file
-                file.SaveAs(filePath);
-
-                // Return relative path for database storage
-                return $"/Uploads/ProfilePictures/{fileName}";
             }
-            catch (Exception ex)
+            catch (MySqlException ex)
             {
-                System.Diagnostics.Debug.WriteLine("SaveUploadedFile Error: " + ex.Message);
-                return null;
+                Debug.WriteLine($"[{DateTime.Now}] AddNotification - MySQL Error: {ex.Message}");
+                ShowMessage("Error adding notification: " + ex.Message, "danger");
             }
         }
 
-        private void ShowSuccessMessage(string message)
+        private void ShowMessage(string message, string type)
         {
-            pnlSuccess.Visible = true;
-            pnlError.Visible = false;
-            litSuccessMessage.Text = message;
+            pnlMessage.Visible = true;
+            lblMessage.Text = message;
+            pnlMessage.CssClass = "alert alert-" + type;
         }
 
-        private void ShowErrorMessage(string message)
+        protected override void Render(HtmlTextWriter writer)
         {
-            pnlError.Visible = true;
-            pnlSuccess.Visible = false;
-            litErrorMessage.Text = message;
+            foreach (string controlId in controlsToRegister)
+            {
+                ClientScript.RegisterForEventValidation(controlId);
+            }
+            base.Render(writer);
+        }
+
+        protected void Page_PreRender(object sender, EventArgs e)
+        {
+            // Placeholder for future use
         }
     }
 }

@@ -1,97 +1,144 @@
 ﻿
 using System;
+using System.Configuration;
 using System.Data;
+using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Diagnostics;
 
 namespace ClinicalBloodBank
 {
     public partial class ManageInventory : System.Web.UI.Page
     {
+        private string connectionString = ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
+        private List<string> controlsToRegister = new List<string>();
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (Session["AdminId"] == null)
             {
-                if (Session["UserType"] == null || Session["UserType"].ToString() != "admin")
-                {
-                    Response.Redirect("Login.aspx");
-                    return;
-                }
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Missing session variable: AdminId");
+                Response.Redirect("Login.aspx");
+                return;
+            }
 
-                try
+            try
+            {
+                this.PreRender += new EventHandler(Page_PreRender);
+                LoadUserInfo();
+
+                if (!IsPostBack)
                 {
                     LoadInventory();
                     LoadDonorDropdown();
                     LoadHospitalDropdown();
-                    litUserName.Text = Session["FirstName"] + " " + Session["LastName"];
-                    litUserInitials.Text = Session["FirstName"].ToString().Substring(0, 1) + Session["LastName"].ToString().Substring(0, 1);
+                    LoadBloodTypeDropdown();
+                    LoadProvinceDropdown();
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Page_Load Error: " + ex.Message);
-                    ShowErrorMessage("An error occurred while loading the page. Please try again.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - MySQL Error: {ex.Message}");
+                ShowMessage("Database error: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Error: {ex.Message}");
+                ShowMessage("Error: " + ex.Message, "danger");
             }
         }
 
-        private void ShowErrorMessage(string message)
+        private void LoadUserInfo()
         {
-            ClientScript.RegisterStartupScript(this.GetType(), "showError", $"alert('{message}');", true);
-        }
-
-        private void ShowSuccessMessage(string message)
-        {
-            ClientScript.RegisterStartupScript(this.GetType(), "showSuccess", $"alert('{message}');", true);
+            if (Session["AdminName"] != null)
+            {
+                string adminName = Session["AdminName"].ToString();
+                litUserName.Text = adminName;
+                string[] nameParts = adminName.Split(' ');
+                string initials = nameParts[0][0].ToString() + (nameParts.Length > 1 ? nameParts[1][0].ToString() : "");
+                litUserInitials.Text = initials.ToUpper();
+                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - AdminName: {adminName}, Initials: {initials}");
+            }
         }
 
         private void LoadInventory()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string query = @"SELECT i.inventory_id, i.blood_type, i.quantity_ml, i.donation_date, i.expiration_date, 
                                     i.test_result, i.status, 
-                                    CONCAT(u.first_name, ' ', u.last_name) as donor_name,
-                                    h.hospital_name
+                                    CONCAT(d.first_name, ' ', d.last_name) as donor_name,
+                                    h.hospital_name, h.province
                                     FROM blood_inventory i
                                     INNER JOIN donors d ON i.donor_id = d.donor_id
-                                    INNER JOIN users u ON d.user_id = u.user_id
-                                    INNER JOIN hospitals h ON i.tested_by_hospital = h.hospital_id";
+                                    INNER JOIN hospitals h ON i.tested_by_hospital = h.hospital_id
+                                    WHERE 1=1";
+
+                    // Apply filters
+                    string bloodType = ddlFilterBloodType.SelectedValue;
+                    string expirationDate = txtFilterExpirationDate.Text;
+                    string province = ddlFilterProvince.SelectedValue;
+
+                    if (!string.IsNullOrEmpty(bloodType))
+                        query += " AND i.blood_type = @BloodType";
+                    if (!string.IsNullOrEmpty(expirationDate))
+                        query += " AND i.expiration_date <= @ExpirationDate";
+                    if (!string.IsNullOrEmpty(province))
+                        query += " AND h.province = @Province";
+
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
+                        if (!string.IsNullOrEmpty(bloodType))
+                            cmd.Parameters.AddWithValue("@BloodType", bloodType);
+                        if (!string.IsNullOrEmpty(expirationDate))
+                            cmd.Parameters.AddWithValue("@ExpirationDate", DateTime.Parse(expirationDate));
+                        if (!string.IsNullOrEmpty(province))
+                            cmd.Parameters.AddWithValue("@Province", province);
+
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
                         gvInventory.DataSource = dt;
                         gvInventory.DataBind();
+
+                        if (dt.Rows.Count == 0)
+                            ShowMessage("No inventory items found.", "info");
+                        else
+                            ShowMessage($"{dt.Rows.Count} inventory item(s) found.", "success");
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadInventory Error: " + ex.Message);
-                    ShowErrorMessage("Error loading inventory.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadInventory - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading inventory: " + ex.Message, "danger");
+                gvInventory.DataSource = null;
+                gvInventory.DataBind();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadInventory - Error: {ex.Message}");
+                ShowMessage("Error loading inventory: " + ex.Message, "danger");
+                gvInventory.DataSource = null;
+                gvInventory.DataBind();
             }
         }
 
         private void LoadDonorDropdown()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"SELECT d.donor_id, CONCAT(u.first_name, ' ', u.last_name) as donor_name
-                                    FROM donors d
-                                    INNER JOIN users u ON d.user_id = u.user_id
-                                    WHERE u.is_active = 1";
+                    string query = @"SELECT donor_id, CONCAT(first_name, ' ', last_name) as donor_name
+                                    FROM donors
+                                    WHERE is_active = 1";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
@@ -104,21 +151,24 @@ namespace ClinicalBloodBank
                         ddlDonor.Items.Insert(0, new ListItem("Select Donor", ""));
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadDonorDropdown Error: " + ex.Message);
-                    ShowErrorMessage("Error loading donor dropdown.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadDonorDropdown - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading donor dropdown: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadDonorDropdown - Error: {ex.Message}");
+                ShowMessage("Error loading donor dropdown: " + ex.Message, "danger");
             }
         }
 
         private void LoadHospitalDropdown()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string query = @"SELECT hospital_id, hospital_name 
@@ -136,12 +186,85 @@ namespace ClinicalBloodBank
                         ddlHospital.Items.Insert(0, new ListItem("Select Hospital", ""));
                     }
                 }
-                catch (Exception ex)
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading hospital dropdown: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - Error: {ex.Message}");
+                ShowMessage("Error loading hospital dropdown: " + ex.Message, "danger");
+            }
+        }
+
+        private void LoadBloodTypeDropdown()
+        {
+            try
+            {
+                ddlFilterBloodType.Items.Clear();
+                ddlFilterBloodType.Items.Add(new ListItem("All Blood Types", ""));
+                ddlFilterBloodType.Items.Add(new ListItem("A+", "A+"));
+                ddlFilterBloodType.Items.Add(new ListItem("A-", "A-"));
+                ddlFilterBloodType.Items.Add(new ListItem("B+", "B+"));
+                ddlFilterBloodType.Items.Add(new ListItem("B-", "B-"));
+                ddlFilterBloodType.Items.Add(new ListItem("AB+", "AB+"));
+                ddlFilterBloodType.Items.Add(new ListItem("AB-", "AB-"));
+                ddlFilterBloodType.Items.Add(new ListItem("O+", "O+"));
+                ddlFilterBloodType.Items.Add(new ListItem("O-", "O-"));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadBloodTypeDropdown - Error: {ex.Message}");
+                ShowMessage("Error loading blood type dropdown: " + ex.Message, "danger");
+            }
+        }
+
+        private void LoadProvinceDropdown()
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    System.Diagnostics.Debug.WriteLine("LoadHospitalDropdown Error: " + ex.Message);
-                    ShowErrorMessage("Error loading hospital dropdown.");
+                    conn.Open();
+                    string query = "SELECT DISTINCT province FROM hospitals WHERE is_verified = 1 ORDER BY province";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        adapter.Fill(dt);
+                        ddlFilterProvince.DataSource = dt;
+                        ddlFilterProvince.DataTextField = "province";
+                        ddlFilterProvince.DataValueField = "province";
+                        ddlFilterProvince.DataBind();
+                        ddlFilterProvince.Items.Insert(0, new ListItem("All Provinces", ""));
+                    }
                 }
             }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadProvinceDropdown - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading province dropdown: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadProvinceDropdown - Error: {ex.Message}");
+                ShowMessage("Error loading province dropdown: " + ex.Message, "danger");
+            }
+        }
+
+        protected void btnFilter_Click(object sender, EventArgs e)
+        {
+            LoadInventory();
+        }
+
+        protected void btnClearFilter_Click(object sender, EventArgs e)
+        {
+            ddlFilterBloodType.SelectedIndex = 0;
+            txtFilterExpirationDate.Text = "";
+            ddlFilterProvince.SelectedIndex = 0;
+            LoadInventory();
         }
 
         protected void gvInventory_RowEditing(object sender, GridViewEditEventArgs e)
@@ -150,22 +273,26 @@ namespace ClinicalBloodBank
             {
                 string inventoryId = gvInventory.DataKeys[e.NewEditIndex].Value.ToString();
                 LoadInventoryData(inventoryId);
-                e.Cancel = true;
+                gvInventory.EditIndex = -1;
+                LoadInventory();
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] gvInventory_RowEditing - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading inventory data: " + ex.Message, "danger");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("gvInventory_RowEditing Error: " + ex.Message);
-                ShowErrorMessage("Error editing inventory.");
+                Debug.WriteLine($"[{DateTime.Now}] gvInventory_RowEditing - Error: {ex.Message}");
+                ShowMessage("Error loading inventory data: " + ex.Message, "danger");
             }
         }
 
         protected void gvInventory_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string inventoryId = gvInventory.DataKeys[e.RowIndex].Value.ToString();
@@ -176,25 +303,53 @@ namespace ClinicalBloodBank
                         cmd.ExecuteNonQuery();
                     }
 
+                    AddNotification(Convert.ToInt32(Session["AdminId"]), "Inventory Deleted", $"Blood inventory item deleted: ID {inventoryId}");
+                    ShowMessage("Inventory deleted successfully.", "success");
                     LoadInventory();
-                    AddNotification("Inventory Deleted", $"Blood inventory item deleted: ID {inventoryId}");
-                    ShowSuccessMessage("Inventory deleted successfully.");
                 }
-                catch (Exception ex)
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] gvInventory_RowDeleting - MySQL Error: {ex.Message}");
+                ShowMessage("Error deleting inventory: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] gvInventory_RowDeleting - Error: {ex.Message}");
+                ShowMessage("Error deleting inventory: " + ex.Message, "danger");
+            }
+        }
+
+        protected void gvInventory_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvInventory.PageIndex = e.NewPageIndex;
+            LoadInventory();
+        }
+
+        protected void gvInventory_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                Button btnDelete = (Button)e.Row.FindControl("btnDelete");
+                if (btnDelete != null)
                 {
-                    System.Diagnostics.Debug.WriteLine("gvInventory_RowDeleting Error: " + ex.Message);
-                    ShowErrorMessage("Error deleting inventory.");
+                    btnDelete.OnClientClick = "return confirm('Are you sure you want to delete this inventory item?');";
+                    controlsToRegister.Add(btnDelete.UniqueID);
+                }
+
+                Button btnEdit = (Button)e.Row.FindControl("btnEdit");
+                if (btnEdit != null)
+                {
+                    controlsToRegister.Add(btnEdit.UniqueID);
                 }
             }
         }
 
         private void LoadInventoryData(string inventoryId)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string query = @"SELECT inventory_id, blood_type, quantity_ml, donation_date, expiration_date, 
@@ -212,7 +367,7 @@ namespace ClinicalBloodBank
                                 ddlInventoryBloodType.SelectedValue = reader["blood_type"].ToString();
                                 txtQuantity.Text = reader["quantity_ml"].ToString();
                                 txtDonationDate.Text = Convert.ToDateTime(reader["donation_date"]).ToString("yyyy-MM-dd");
-                                txtExpirationDate.Text = Convert.ToDateTime(reader["expiration_date"]).ToString("yyyy-MM-dd");
+                                lblExpirationDate.Text = Convert.ToDateTime(reader["expiration_date"]).ToString("yyyy-MM-dd");
                                 ddlDonor.SelectedValue = reader["donor_id"].ToString();
                                 ddlHospital.SelectedValue = reader["tested_by_hospital"].ToString();
                                 ddlTestResult.SelectedValue = reader["test_result"].ToString();
@@ -221,11 +376,16 @@ namespace ClinicalBloodBank
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadInventoryData Error: " + ex.Message);
-                    ShowErrorMessage("Error loading inventory data.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadInventoryData - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading inventory data: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadInventoryData - Error: {ex.Message}");
+                ShowMessage("Error loading inventory data: " + ex.Message, "danger");
             }
         }
 
@@ -233,26 +393,26 @@ namespace ClinicalBloodBank
         {
             if (!ValidateInventoryForm()) return;
 
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+                    DateTime donationDate = DateTime.Parse(txtDonationDate.Text);
+                    DateTime expirationDate = donationDate.AddDays(42); // Blood expires after 42 days
 
                     if (string.IsNullOrEmpty(hdnInventoryId.Value)) // New inventory
                     {
                         string query = @"INSERT INTO blood_inventory (blood_type, quantity_ml, donation_date, expiration_date, 
                                       donor_id, tested_by_hospital, test_result, status, created_at)
                                       VALUES (@bloodType, @quantity, @donationDate, @expirationDate, @donorId, @hospitalId, 
-                                      @testResult, @status, NOW())";
+                                      @testResult, @status, CURRENT_TIMESTAMP)";
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
                             cmd.Parameters.AddWithValue("@bloodType", ddlInventoryBloodType.SelectedValue);
                             cmd.Parameters.AddWithValue("@quantity", txtQuantity.Text);
-                            cmd.Parameters.AddWithValue("@donationDate", txtDonationDate.Text);
-                            cmd.Parameters.AddWithValue("@expirationDate", txtExpirationDate.Text);
+                            cmd.Parameters.AddWithValue("@donationDate", donationDate);
+                            cmd.Parameters.AddWithValue("@expirationDate", expirationDate);
                             cmd.Parameters.AddWithValue("@donorId", ddlDonor.SelectedValue);
                             cmd.Parameters.AddWithValue("@hospitalId", ddlHospital.SelectedValue);
                             cmd.Parameters.AddWithValue("@testResult", ddlTestResult.SelectedValue);
@@ -260,8 +420,9 @@ namespace ClinicalBloodBank
                             cmd.ExecuteNonQuery();
                         }
 
-                        AddNotification("Inventory Added", $"New blood inventory added: {txtQuantity.Text}ml of {ddlInventoryBloodType.SelectedValue}");
-                        ShowSuccessMessage("Inventory added successfully.");
+                        AddNotification(Convert.ToInt32(Session["AdminId"]), "Inventory Added",
+                            $"New blood inventory added: {txtQuantity.Text}ml of {ddlInventoryBloodType.SelectedValue}");
+                        ShowMessage("Inventory added successfully.", "success");
                     }
                     else // Update existing inventory
                     {
@@ -274,8 +435,8 @@ namespace ClinicalBloodBank
                         {
                             cmd.Parameters.AddWithValue("@bloodType", ddlInventoryBloodType.SelectedValue);
                             cmd.Parameters.AddWithValue("@quantity", txtQuantity.Text);
-                            cmd.Parameters.AddWithValue("@donationDate", txtDonationDate.Text);
-                            cmd.Parameters.AddWithValue("@expirationDate", txtExpirationDate.Text);
+                            cmd.Parameters.AddWithValue("@donationDate", donationDate);
+                            cmd.Parameters.AddWithValue("@expirationDate", expirationDate);
                             cmd.Parameters.AddWithValue("@donorId", ddlDonor.SelectedValue);
                             cmd.Parameters.AddWithValue("@hospitalId", ddlHospital.SelectedValue);
                             cmd.Parameters.AddWithValue("@testResult", ddlTestResult.SelectedValue);
@@ -284,24 +445,31 @@ namespace ClinicalBloodBank
                             cmd.ExecuteNonQuery();
                         }
 
-                        AddNotification("Inventory Updated", $"Blood inventory updated: {txtQuantity.Text}ml of {ddlInventoryBloodType.SelectedValue}");
-                        ShowSuccessMessage("Inventory updated successfully.");
+                        AddNotification(Convert.ToInt32(Session["AdminId"]), "Inventory Updated",
+                            $"Blood inventory updated: {txtQuantity.Text}ml of {ddlInventoryBloodType.SelectedValue}");
+                        ShowMessage("Inventory updated successfully.", "success");
                     }
 
                     LoadInventory();
                     ClearForm();
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("btnSaveInventory_Click Error: " + ex.Message);
-                    ShowErrorMessage("Error saving inventory.");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] btnSaveInventory_Click - MySQL Error: {ex.Message}");
+                ShowMessage("Error saving inventory: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] btnSaveInventory_Click - Error: {ex.Message}");
+                ShowMessage("Error saving inventory: " + ex.Message, "danger");
             }
         }
 
         protected void btnClearForm_Click(object sender, EventArgs e)
         {
             ClearForm();
+            LoadInventory();
         }
 
         private void ClearForm()
@@ -310,7 +478,7 @@ namespace ClinicalBloodBank
             ddlInventoryBloodType.SelectedIndex = 0;
             txtQuantity.Text = "";
             txtDonationDate.Text = "";
-            txtExpirationDate.Text = "";
+            lblExpirationDate.Text = "";
             ddlDonor.SelectedIndex = 0;
             ddlHospital.SelectedIndex = 0;
             ddlTestResult.SelectedIndex = 0;
@@ -320,41 +488,82 @@ namespace ClinicalBloodBank
         private bool ValidateInventoryForm()
         {
             if (string.IsNullOrEmpty(ddlInventoryBloodType.SelectedValue) || string.IsNullOrEmpty(txtQuantity.Text) ||
-                string.IsNullOrEmpty(txtDonationDate.Text) || string.IsNullOrEmpty(txtExpirationDate.Text) ||
-                string.IsNullOrEmpty(ddlDonor.SelectedValue) || string.IsNullOrEmpty(ddlHospital.SelectedValue) ||
-                string.IsNullOrEmpty(ddlTestResult.SelectedValue) || string.IsNullOrEmpty(ddlStatus.SelectedValue))
+                string.IsNullOrEmpty(txtDonationDate.Text) || string.IsNullOrEmpty(ddlDonor.SelectedValue) ||
+                string.IsNullOrEmpty(ddlHospital.SelectedValue) || string.IsNullOrEmpty(ddlTestResult.SelectedValue) ||
+                string.IsNullOrEmpty(ddlStatus.SelectedValue))
             {
-                ShowErrorMessage("All fields are required.");
+                ShowMessage("All fields except expiration date are required.", "danger");
                 return false;
             }
+
+            try
+            {
+                int quantity = int.Parse(txtQuantity.Text);
+                if (quantity <= 0)
+                {
+                    ShowMessage("Quantity must be greater than 0.", "danger");
+                    return false;
+                }
+
+                DateTime donationDate = DateTime.Parse(txtDonationDate.Text);
+                if (donationDate > DateTime.Now)
+                {
+                    ShowMessage("Donation date cannot be in the future.", "danger");
+                    return false;
+                }
+            }
+            catch (FormatException)
+            {
+                ShowMessage("Invalid quantity or date format.", "danger");
+                return false;
+            }
+
             return true;
         }
 
-        private void AddNotification(string title, string message)
+        private void AddNotification(int? adminId, string title, string message)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"INSERT INTO notifications (user_id, title, message, is_read, created_at) 
-                                  VALUES (@userId, @title, @message, 0, NOW())";
+                    string query = @"INSERT INTO notifications (admin_id, title, message, is_read, created_at) 
+                                    VALUES (@adminId, @title, @message, 0, CURRENT_TIMESTAMP)";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@userId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", adminId.HasValue ? (object)adminId.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@title", title);
                         cmd.Parameters.AddWithValue("@message", message);
                         cmd.ExecuteNonQuery();
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("AddNotification Error: " + ex.Message);
-                    ShowErrorMessage("Error adding notification.");
-                }
             }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] AddNotification - MySQL Error: {ex.Message}");
+            }
+        }
+
+        private void ShowMessage(string message, string type)
+        {
+            pnlMessage.Visible = true;
+            lblMessage.Text = message;
+            pnlMessage.CssClass = "alert alert-" + type;
+        }
+
+        protected override void Render(HtmlTextWriter writer)
+        {
+            foreach (string controlId in controlsToRegister)
+            {
+                ClientScript.RegisterForEventValidation(controlId);
+            }
+            base.Render(writer);
+        }
+
+        protected void Page_PreRender(object sender, EventArgs e)
+        {
+            // Placeholder for future use, e.g., restoring filter state
         }
     }
 }

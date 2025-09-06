@@ -1,61 +1,74 @@
 ﻿using System;
+using System.Configuration;
 using System.Data;
+using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Diagnostics;
 
 namespace ClinicalBloodBank
 {
     public partial class AdminDashboard : System.Web.UI.Page
     {
+        private string connectionString = ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
+        private List<string> controlsToRegister = new List<string>();
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (Session["AdminId"] == null)
             {
-                // Validate session and authentication
-                if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != "admin")
-                {
-                    Response.Redirect("Login.aspx");
-                    return;
-                }
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Missing session variable: AdminId");
+                Response.Redirect("Login.aspx");
+                return;
+            }
 
-                try
+            try
+            {
+                this.PreRender += new EventHandler(Page_PreRender);
+                controlsToRegister.Add(btnClearAll.UniqueID);
+                controlsToRegister.Add(lnkLogout.UniqueID);
+                controlsToRegister.Add(lnkProfileLogout.UniqueID);
+
+                if (!IsPostBack)
                 {
-                    // Load user details and dashboard data
                     LoadUserDetails();
                     LoadDashboardStats();
                     LoadNotifications();
                     LoadNotificationDropdown();
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Page_Load Error: " + ex.Message);
-                    errorMessage.InnerText = "An error occurred while loading the dashboard. Some data may not be available.";
-                    errorMessage.Style["display"] = "block";
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - MySQL Error: {ex.Message}");
+                ShowMessage("Database error: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Error: {ex.Message}");
+                ShowMessage("Error: " + ex.Message, "danger");
             }
         }
 
         private void LoadUserDetails()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
                 litUserName.Text = "Administrator";
                 litUserInitials.Text = "AD";
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = "SELECT first_name, last_name, email FROM admins WHERE admin_id = @adminId";
+                    string query = "SELECT first_name, last_name FROM admins WHERE admin_id = @adminId";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -68,19 +81,19 @@ namespace ClinicalBloodBank
                             }
                             else
                             {
-                                // Fallback to session values
                                 litUserName.Text = Session["AdminName"]?.ToString() ?? "Administrator";
                                 litUserInitials.Text = GetInitials(Session["AdminName"]?.ToString() ?? "Administrator");
                             }
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadUserDetails Error: " + ex.Message);
-                    litUserName.Text = Session["AdminName"]?.ToString() ?? "Administrator";
-                    litUserInitials.Text = GetInitials(Session["AdminName"]?.ToString() ?? "Administrator");
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadUserDetails - MySQL Error: {ex.Message}");
+                litUserName.Text = Session["AdminName"]?.ToString() ?? "Administrator";
+                litUserInitials.Text = GetInitials(Session["AdminName"]?.ToString() ?? "Administrator");
+                ShowMessage("Error loading user details: " + ex.Message, "danger");
             }
         }
 
@@ -99,22 +112,19 @@ namespace ClinicalBloodBank
 
         private void LoadDashboardStats()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
                 litTotalDonors.Text = "0";
                 litTotalHospitals.Text = "0";
                 litTotalInventory.Text = "0";
                 litPendingRequests.Text = "0";
-                errorMessage.InnerText = "Database connection configuration is missing.";
-                errorMessage.Style["display"] = "block";
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
 
@@ -146,33 +156,31 @@ namespace ClinicalBloodBank
                         litPendingRequests.Text = cmd.ExecuteScalar()?.ToString() ?? "0";
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadDashboardStats Error: " + ex.Message);
-                    errorMessage.InnerText = "Error loading dashboard statistics. Using default values.";
-                    errorMessage.Style["display"] = "block";
-                    litTotalDonors.Text = "0";
-                    litTotalHospitals.Text = "0";
-                    litTotalInventory.Text = "0";
-                    litPendingRequests.Text = "0";
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadDashboardStats - MySQL Error: {ex.Message}");
+                ShowMessage("Error loading dashboard statistics: " + ex.Message, "danger");
+                litTotalDonors.Text = "0";
+                litTotalHospitals.Text = "0";
+                litTotalInventory.Text = "0";
+                litPendingRequests.Text = "0";
             }
         }
 
         private void LoadNotifications()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
                 notificationCount.InnerText = "0";
                 lblNoNotifications.Visible = true;
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
 
@@ -180,69 +188,67 @@ namespace ClinicalBloodBank
                     string countQuery = "SELECT COUNT(*) FROM notifications WHERE is_read = 0 AND admin_id = @adminId";
                     using (MySqlCommand cmd = new MySqlCommand(countQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         notificationCount.InnerText = cmd.ExecuteScalar()?.ToString() ?? "0";
                     }
 
-                    // Get notifications for repeater
+                    // Get all notifications for GridView
                     string notifQuery = @"SELECT title, message, created_at, is_read 
-                                   FROM notifications 
-                                   WHERE admin_id = @adminId 
-                                   ORDER BY created_at DESC 
-                                   LIMIT 5";
+                                        FROM notifications 
+                                        WHERE admin_id = @adminId 
+                                        ORDER BY created_at DESC";
                     using (MySqlCommand cmd = new MySqlCommand(notifQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
 
                         if (dt.Rows.Count > 0)
                         {
-                            rptNotifications.DataSource = dt;
-                            rptNotifications.DataBind();
+                            gvNotifications.DataSource = dt;
+                            gvNotifications.DataBind();
                             lblNoNotifications.Visible = false;
                         }
                         else
                         {
-                            rptNotifications.DataSource = null;
-                            rptNotifications.DataBind();
+                            gvNotifications.DataSource = null;
+                            gvNotifications.DataBind();
                             lblNoNotifications.Visible = true;
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadNotifications Error: " + ex.Message);
-                    notificationCount.InnerText = "0";
-                    lblNoNotifications.Visible = true;
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadNotifications - MySQL Error: {ex.Message}");
+                notificationCount.InnerText = "0";
+                lblNoNotifications.Visible = true;
+                ShowMessage("Error loading notifications: " + ex.Message, "danger");
             }
         }
 
         private void LoadNotificationDropdown()
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
                 notificationList.InnerHtml = "<div class='no-notifications'>Database connection error</div>";
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string notifQuery = @"SELECT title, message, created_at, is_read 
-                                   FROM notifications 
-                                   WHERE admin_id = @adminId 
-                                   ORDER BY created_at DESC 
-                                   LIMIT 5";
+                                        FROM notifications 
+                                        WHERE admin_id = @adminId 
+                                        ORDER BY created_at DESC";
                     using (MySqlCommand cmd = new MySqlCommand(notifQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
@@ -258,13 +264,13 @@ namespace ClinicalBloodBank
                                 bool isRead = Convert.ToBoolean(row["is_read"]);
 
                                 string notificationItem = $@"
-                            <div class='notification-item {(isRead ? "" : "unread")}'>
-                                <div class='notification-icon'>🔔</div>
-                                <div class='notification-content'>
-                                    <div class='notification-message'><strong>{title}</strong>: {message}</div>
-                                    <div class='notification-time'>{createdAt:yyyy-MM-dd HH:mm}</div>
-                                </div>
-                            </div>";
+                                    <div class='notification-item {(isRead ? "" : "unread")}'>
+                                        <div class='notification-icon'>🔔</div>
+                                        <div class='notification-content'>
+                                            <div class='notification-message'><strong>{title}</strong>: {message}</div>
+                                            <div class='notification-time'>{createdAt:yyyy-MM-dd HH:mm}</div>
+                                        </div>
+                                    </div>";
                                 notificationList.InnerHtml += notificationItem;
                             }
                         }
@@ -274,34 +280,32 @@ namespace ClinicalBloodBank
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("LoadNotificationDropdown Error: " + ex.Message);
-                    notificationList.InnerHtml = "<div class='no-notifications'>Error loading notifications</div>";
-                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadNotificationDropdown - MySQL Error: {ex.Message}");
+                notificationList.InnerHtml = "<div class='no-notifications'>Error loading notifications</div>";
+                ShowMessage("Error loading notifications: " + ex.Message, "danger");
             }
         }
 
         protected void btnClearAll_Click(object sender, EventArgs e)
         {
-            string connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
-                errorMessage.InnerText = "Database connection configuration is missing.";
-                errorMessage.Style["display"] = "block";
+                ShowMessage("Database connection configuration is missing.", "danger");
                 return;
             }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                try
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
                     string deleteQuery = "DELETE FROM notifications WHERE admin_id = @adminId";
                     using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", Session["UserId"]);
+                        cmd.Parameters.AddWithValue("@adminId", Session["AdminId"]);
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected > 0)
@@ -309,16 +313,64 @@ namespace ClinicalBloodBank
                             notificationCount.InnerText = "0";
                             notificationList.InnerHtml = "<div class='no-notifications'>No notifications</div>";
                             LoadNotifications();
+                            ShowMessage("All notifications cleared.", "success");
                         }
                     }
                 }
-                catch (Exception ex)
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] btnClearAll_Click - MySQL Error: {ex.Message}");
+                ShowMessage("Error clearing notifications: " + ex.Message, "danger");
+            }
+        }
+
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("Login.aspx");
+        }
+
+        protected void gvNotifications_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            gvNotifications.PageIndex = e.NewPageIndex;
+            LoadNotifications();
+        }
+
+        protected void gvNotifications_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.Pager)
+            {
+                foreach (Control control in e.Row.Controls[0].Controls)
                 {
-                    System.Diagnostics.Debug.WriteLine("btnClearAll_Click Error: " + ex.Message);
-                    errorMessage.InnerText = "Error clearing notifications.";
-                    errorMessage.Style["display"] = "block";
+                    if (control is LinkButton || control is Button)
+                    {
+                        controlsToRegister.Add(control.UniqueID);
+                    }
                 }
             }
+        }
+
+        private void ShowMessage(string message, string type)
+        {
+            pnlMessage.Visible = true;
+            lblMessage.Text = message;
+            pnlMessage.CssClass = "alert alert-" + type;
+        }
+
+        protected override void Render(HtmlTextWriter writer)
+        {
+            foreach (string controlId in controlsToRegister)
+            {
+                ClientScript.RegisterForEventValidation(controlId);
+            }
+            base.Render(writer);
+        }
+
+        protected void Page_PreRender(object sender, EventArgs e)
+        {
+            // Placeholder for future use
         }
     }
 }

@@ -4,245 +4,309 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title>Clinical Blood Bank - Manage Admins</title>
-   <style>
-       
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    body {
-        background-color: #f8f9fa;
-        display: flex;
-        min-height: 100vh;
-    }
-    
-    .sidebar {
-        width: 250px;
-        background: linear-gradient(to bottom, #2c3e50, #1a2530);
-        color: white;
-        height: 100vh;
-        position: fixed;
-        overflow-y: auto;
-    }
-    
-    .sidebar-header {
-        padding: 20px;
-        text-align: center;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .sidebar-header h3 {
-        color: white;
-        font-size: 18px;
-        margin: 0;
-    }
-    
-    .sidebar-menu {
-        padding: 20px 0;
-    }
-    
-    .menu-item {
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        color: white;
-        text-decoration: none;
-        transition: background 0.3s;
-        cursor: pointer;
-    }
-    
-    .menu-item:hover {
-        background: rgba(255,255,255,0.1);
-    }
-    
-    .menu-item.active {
-        background: rgba(255,255,255,0.2);
-        border-left: 4px solid #d32f2f;
-    }
-    
-    .menu-icon {
-        margin-right: 10px;
-        width: 20px;
-        text-align: center;
-    }
-    
-    .main-content {
-        flex: 1;
-        margin-left: 250px;
-        padding: 20px;
-    }
-    
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px;
-        background: white;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .welcome-text h1 {
-        color: #2c3e50;
-        font-size: 24px;
-        margin-bottom: 5px;
-    }
-    
-    .welcome-text p {
-        color: #7f8c8d;
-        margin: 0;
-    }
-    
-    .user-profile {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #d32f2f;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-    }
-    
-    .content-section {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .section-title {
-        color: #2c3e50;
-        font-size: 20px;
-        font-weight: 600;
-    }
-    
-    .btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: background 0.3s;
-    }
-    
-    .btn-primary {
-        background: #d32f2f;
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background: #b71c1c;
-    }
-    
-    .btn-secondary {
-        background: #2c3e50;
-        color: white;
-    }
-    
-    .btn-secondary:hover {
-        background: #1a2530;
-    }
-    
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .table th,
-    .table td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .table th {
-        background: #f8f9fa;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .status-active {
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
-    
-    .status-inactive {
-        background: #ffebee;
-        color: #d32f2f;
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 5px;
-    }
-    
-    .btn-sm {
-        padding: 5px 10px;
-        font-size: 12px;
-    }
-    
-    .btn-edit {
-        background: #ff9800;
-        color: white;
-    }
-    
-    .btn-delete {
-        background: #d32f2f;
-        color: white;
-    }
-    
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-        color: #2c3e50;
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 14px;
-    }
-    
-    .form-control:focus {
-        border-color: #d32f2f;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
-    }
-</style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(to bottom, #2c3e50, #1a2530);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h3 {
+            color: white;
+            font-size: 18px;
+            margin: 0;
+        }
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .menu-item.active {
+            background: rgba(255,255,255,0.2);
+            border-left: 4px solid #d32f2f;
+        }
+        .menu-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .welcome-text h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .welcome-text p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #d32f2f;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .content-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-primary {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #1a2530;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .table th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status-inactive {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .btn-edit {
+            background: #ff9800;
+            color: white;
+        }
+        .btn-delete {
+            background: #d32f2f;
+            color: white;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            border-color: #d32f2f;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .alert-danger {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-col {
+            flex: 1;
+        }
+        .required-field::after {
+            content: " *";
+            color: #d32f2f;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: #2e7d32;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2e7d32;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        .pager {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .pager-button {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pager-button.active {
+            background: #d32f2f;
+            color: white;
+            border-color: #d32f2f;
+        }
+        .text-danger {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
@@ -292,36 +356,76 @@
                 </div>
             </div>
 
+            <asp:Panel ID="pnlMessage" runat="server" Visible="false" CssClass="alert">
+                <asp:Label ID="lblMessage" runat="server" Text=""></asp:Label>
+            </asp:Panel>
+
             <div class="content-section">
                 <div class="section-header">
                     <div class="section-title">Add/Edit Admin</div>
                 </div>
                 <asp:HiddenField ID="hdnAdminId" runat="server" />
-                <div class="form-group">
-                    <label for="txtAdminFirstName">First Name</label>
-                    <asp:TextBox ID="txtAdminFirstName" runat="server" CssClass="form-control" />
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAdminFirstName" class="required-field">First Name</label>
+                            <asp:TextBox ID="txtAdminFirstName" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvFirstName" runat="server" ControlToValidate="txtAdminFirstName"
+                                ErrorMessage="First name is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAdminLastName" class="required-field">Last Name</label>
+                            <asp:TextBox ID="txtAdminLastName" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvLastName" runat="server" ControlToValidate="txtAdminLastName"
+                                ErrorMessage="Last name is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtAdminLastName">Last Name</label>
-                    <asp:TextBox ID="txtAdminLastName" runat="server" CssClass="form-control" />
+                
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAdminEmail" class="required-field">Email</label>
+                            <asp:TextBox ID="txtAdminEmail" runat="server" CssClass="form-control" TextMode="Email" />
+                            <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtAdminEmail"
+                                ErrorMessage="Email is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                            <asp:RegularExpressionValidator ID="revEmail" runat="server" ControlToValidate="txtAdminEmail"
+                                ValidationExpression="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                ErrorMessage="Please enter a valid email address" Display="Dynamic" CssClass="text-danger"></asp:RegularExpressionValidator>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAdminPhone">Phone</label>
+                            <asp:TextBox ID="txtAdminPhone" runat="server" CssClass="form-control" TextMode="Phone" />
+                            <asp:RegularExpressionValidator ID="revPhone" runat="server" ControlToValidate="txtAdminPhone"
+                                ValidationExpression="^\d{10}$" ErrorMessage="Phone number must be 10 digits" Display="Dynamic" CssClass="text-danger"></asp:RegularExpressionValidator>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtAdminEmail">Email</label>
-                    <asp:TextBox ID="txtAdminEmail" runat="server" CssClass="form-control" TextMode="Email" />
-                </div>
-                <div class="form-group">
-                    <label for="txtAdminPassword">Password (for new admins)</label>
+                
+                <div class="form-group" id="passwordSection" runat="server">
+                    <label for="txtAdminPassword" class="required-field">Password</label>
                     <asp:TextBox ID="txtAdminPassword" runat="server" CssClass="form-control" TextMode="Password" />
+                    <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ControlToValidate="txtAdminPassword"
+                        ErrorMessage="Password is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                 </div>
+                
                 <div class="form-group">
-                    <label for="txtAdminPhone">Phone</label>
-                    <asp:TextBox ID="txtAdminPhone" runat="server" CssClass="form-control" TextMode="Phone" />
+                    <label class="switch">
+                        <asp:CheckBox ID="cbAdminActive" runat="server" Checked="true" />
+                        <span class="slider round"></span>
+                    </label>
+                    <span> Active Admin</span>
                 </div>
+                
                 <div class="form-group">
-                    <asp:CheckBox ID="cbAdminActive" runat="server" Text=" Active Admin" />
+                    <asp:Button ID="btnSaveAdmin" runat="server" Text="Save Admin" CssClass="btn btn-primary" OnClick="btnSaveAdmin_Click" />
+                    <asp:Button ID="btnClearForm" runat="server" Text="Clear Form" CssClass="btn btn-secondary" OnClick="btnClearForm_Click" CausesValidation="false" />
                 </div>
-                <asp:Button ID="btnSaveAdmin" runat="server" Text="Save Admin" CssClass="btn btn-primary" OnClick="btnSaveAdmin_Click" />
-                <asp:Button ID="btnClearForm" runat="server" Text="Clear Form" CssClass="btn btn-secondary" OnClick="btnClearForm_Click" />
             </div>
 
             <div class="content-section">
@@ -329,7 +433,9 @@
                     <div class="section-title">Admin List</div>
                 </div>
                 <asp:GridView ID="gvAdmins" runat="server" AutoGenerateColumns="False" CssClass="table" DataKeyNames="admin_id"
-                    OnRowEditing="gvAdmins_RowEditing" OnRowDeleting="gvAdmins_RowDeleting">
+                    OnRowEditing="gvAdmins_RowEditing" OnRowDeleting="gvAdmins_RowDeleting"
+                    OnPageIndexChanging="gvAdmins_PageIndexChanging" OnRowDataBound="gvAdmins_RowDataBound"
+                    AllowPaging="True" PageSize="10">
                     <Columns>
                         <asp:BoundField DataField="admin_id" HeaderText="ID" ReadOnly="True" />
                         <asp:BoundField DataField="first_name" HeaderText="First Name" />
@@ -347,7 +453,7 @@
                             <ItemTemplate>
                                 <div class="action-buttons">
                                     <asp:Button ID="btnEdit" runat="server" CommandName="Edit" Text="Edit" CssClass="btn btn-sm btn-edit" />
-                                    <asp:Button ID="btnDelete" runat="server" CommandName="Delete" Text="Deactivate" CssClass="btn btn-sm btn-delete" OnClientClick="return confirm('Are you sure you want to deactivate this admin?');" />
+                                    <asp:Button ID="btnDelete" runat="server" CommandName="Delete" Text="Deactivate" CssClass="btn btn-sm btn-delete" />
                                 </div>
                             </ItemTemplate>
                         </asp:TemplateField>

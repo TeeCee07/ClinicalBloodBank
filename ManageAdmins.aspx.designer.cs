@@ -42,6 +42,24 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Literal litUserName;
 
         /// <summary>
+        /// pnlMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlMessage;
+
+        /// <summary>
+        /// lblMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMessage;
+
+        /// <summary>
         /// hdnAdminId control.
         /// </summary>
         /// <remarks>
@@ -60,6 +78,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.TextBox txtAdminFirstName;
 
         /// <summary>
+        /// rfvFirstName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvFirstName;
+
+        /// <summary>
         /// txtAdminLastName control.
         /// </summary>
         /// <remarks>
@@ -67,6 +94,15 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtAdminLastName;
+
+        /// <summary>
+        /// rfvLastName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvLastName;
 
         /// <summary>
         /// txtAdminEmail control.
@@ -78,13 +114,22 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.TextBox txtAdminEmail;
 
         /// <summary>
-        /// txtAdminPassword control.
+        /// rfvEmail control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAdminPassword;
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvEmail;
+
+        /// <summary>
+        /// revEmail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator revEmail;
 
         /// <summary>
         /// txtAdminPhone control.
@@ -94,6 +139,42 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtAdminPhone;
+
+        /// <summary>
+        /// revPhone control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator revPhone;
+
+        /// <summary>
+        /// passwordSection control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl passwordSection;
+
+        /// <summary>
+        /// txtAdminPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtAdminPassword;
+
+        /// <summary>
+        /// rfvPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvPassword;
 
         /// <summary>
         /// cbAdminActive control.
