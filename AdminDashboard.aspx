@@ -12,7 +12,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
-            background-color: #f8f9fa;
+            background-color: #f8f9fa`
             display: flex;
             min-height: 100vh;
         }
