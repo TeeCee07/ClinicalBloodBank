@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Configuration;
 using System.Data;
 using System.Collections.Generic;
@@ -17,9 +16,9 @@ namespace ClinicalBloodBank
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["AdminId"] == null)
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != "hospital")
             {
-                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Missing session variable: AdminId");
+                Debug.WriteLine($"[{DateTime.Now}] Page_Load - Invalid session. UserId: {Session["UserId"]}, UserType: {Session["UserType"]}");
                 Response.Redirect("Login.aspx");
                 return;
             }
@@ -51,27 +50,52 @@ namespace ClinicalBloodBank
         {
             try
             {
-                if (Session["AdminName"] != null)
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    string adminName = Session["AdminName"].ToString();
-                    litUserName.Text = adminName;
-                    string[] nameParts = adminName.Split(' ');
-                    string initials = nameParts[0][0].ToString() + (nameParts.Length > 1 ? nameParts[1][0].ToString() : "");
-                    litUserInitials.Text = initials.ToUpper();
-                    Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - AdminName: {adminName}, Initials: {initials}");
-                }
-                else
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - AdminName is null");
-                    litUserName.Text = "Admin";
-                    litUserInitials.Text = "AD";
+                    conn.Open();
+                    string query = "SELECT hospital_name FROM hospitals WHERE hospital_id = @hospitalId";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string hospitalName = reader["hospital_name"]?.ToString() ?? "Hospital";
+                                litUserName.Text = hospitalName;
+                                litUserInitials.Text = GetInitials(hospitalName);
+                                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - HospitalName: {hospitalName}");
+                            }
+                            else
+                            {
+                                litUserName.Text = "Hospital";
+                                litUserInitials.Text = "HO";
+                                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - Hospital not found for UserId: {Session["UserId"]}");
+                            }
+                        }
+                    }
                 }
             }
-            catch (Exception ex)
+            catch (MySqlException ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - Error: {ex.Message}");
-                ShowMessage("Error loading user info: " + ex.Message, "danger");
+                Debug.WriteLine($"[{DateTime.Now}] LoadUserInfo - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
+                ShowMessage("Error loading hospital info: " + ex.Message, "danger");
+                litUserName.Text = "Hospital";
+                litUserInitials.Text = "HO";
             }
+        }
+
+        private string GetInitials(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "HO";
+            string[] parts = name.Split(' ');
+            string initials = "";
+            foreach (string part in parts)
+            {
+                if (!string.IsNullOrEmpty(part))
+                    initials += part[0].ToString().ToUpper();
+            }
+            return initials.Length > 2 ? initials.Substring(0, 2) : initials;
         }
 
         private void LoadBloodRequests()
@@ -90,7 +114,7 @@ namespace ClinicalBloodBank
                                     FROM blood_requests r
                                     LEFT JOIN donors d ON r.requester_id = d.donor_id AND r.requester_role = 'donor'
                                     LEFT JOIN hospitals h ON r.requester_id = h.hospital_id AND r.requester_role = 'hospital'
-                                    WHERE 1=1";
+                                    WHERE r.requester_id = @hospitalId AND r.requester_role = 'hospital'";
 
                     string bloodType = ddlFilterBloodType.SelectedValue;
                     string status = ddlFilterStatus.SelectedValue;
@@ -105,6 +129,7 @@ namespace ClinicalBloodBank
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         if (!string.IsNullOrEmpty(bloodType))
                             cmd.Parameters.AddWithValue("@BloodType", bloodType);
                         if (!string.IsNullOrEmpty(status))
@@ -123,13 +148,13 @@ namespace ClinicalBloodBank
                         else
                             ShowMessage($"{dt.Rows.Count} blood request(s) found.", "success");
 
-                        Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - Retrieved {dt.Rows.Count} requests");
+                        Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - Retrieved {dt.Rows.Count} requests for hospital ID {Session["UserId"]}");
                     }
                 }
             }
             catch (MySqlException ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}, Query: {ex.TargetSite}");
+                Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
                 ShowMessage("Error loading blood requests: " + ex.Message, "danger");
                 gvBloodRequests.DataSource = null;
                 gvBloodRequests.DataBind();
@@ -152,9 +177,10 @@ namespace ClinicalBloodBank
                     conn.Open();
                     string query = @"SELECT hospital_id, hospital_name 
                                     FROM hospitals 
-                                    WHERE is_verified = 1";
+                                    WHERE is_verified = 1 AND hospital_id = @hospitalId";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         DataTable dt = new DataTable();
                         adapter.Fill(dt);
@@ -163,7 +189,7 @@ namespace ClinicalBloodBank
                         ddlFulfillHospital.DataValueField = "hospital_id";
                         ddlFulfillHospital.DataBind();
                         ddlFulfillHospital.Items.Insert(0, new ListItem("Select Hospital", ""));
-                        Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - Loaded {dt.Rows.Count} hospitals");
+                        Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - Loaded {dt.Rows.Count} hospitals for hospital ID {Session["UserId"]}");
                     }
                 }
             }
@@ -307,10 +333,11 @@ namespace ClinicalBloodBank
                                     FROM blood_requests r
                                     LEFT JOIN donors d ON r.requester_id = d.donor_id AND r.requester_role = 'donor'
                                     LEFT JOIN hospitals h ON r.requester_id = h.hospital_id AND r.requester_role = 'hospital'
-                                    WHERE r.request_id = @requestId";
+                                    WHERE r.request_id = @requestId AND r.requester_id = @hospitalId AND r.requester_role = 'hospital'";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@requestId", requestId);
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -323,7 +350,7 @@ namespace ClinicalBloodBank
                                 txtReason.Text = reader["reason"].ToString();
                                 ddlRequestStatus.SelectedValue = reader["status"].ToString();
                                 txtRequestNotes.Text = reader["notes"] != DBNull.Value ? reader["notes"].ToString() : "";
-                                if (reader["fulfilled_by_hospital"] != DBNull.Value)
+                                if (reader["fulfilled_by_hospital"] != DBNull.Value && reader["fulfilled_by_hospital"].ToString() == Session["UserId"].ToString())
                                 {
                                     ddlFulfillHospital.SelectedValue = reader["fulfilled_by_hospital"].ToString();
                                 }
@@ -335,8 +362,8 @@ namespace ClinicalBloodBank
                             }
                             else
                             {
-                                ShowMessage("Request not found.", "danger");
-                                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - Request ID {requestId} not found");
+                                ShowMessage("Request not found or you lack permission to view it.", "danger");
+                                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - Request ID {requestId} not found for hospital ID {Session["UserId"]}");
                             }
                         }
                     }
@@ -368,7 +395,7 @@ namespace ClinicalBloodBank
                                         fulfilled_by_hospital = @hospitalId, 
                                         patient_details = @notes, 
                                         fulfilled_at = CASE WHEN @status IN ('approved', 'fulfilled') THEN CURRENT_TIMESTAMP ELSE NULL END
-                                    WHERE request_id = @requestId";
+                                    WHERE request_id = @requestId AND requester_id = @hospitalId AND requester_role = 'hospital'";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -376,12 +403,13 @@ namespace ClinicalBloodBank
                         cmd.Parameters.AddWithValue("@hospitalId", string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue) ? (object)DBNull.Value : ddlFulfillHospital.SelectedValue);
                         cmd.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(txtRequestNotes.Text) ? (object)DBNull.Value : txtRequestNotes.Text);
                         cmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected == 0)
                         {
-                            ShowMessage("Request not found.", "danger");
-                            Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Request ID {hdnRequestId.Value} not found");
+                            ShowMessage("Request not found or you lack permission to update it.", "danger");
+                            Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Request ID {hdnRequestId.Value} not found for hospital ID {Session["UserId"]}");
                             return;
                         }
                     }
@@ -390,10 +418,11 @@ namespace ClinicalBloodBank
                     {
                         if (!UpdateInventoryForRequest())
                         {
-                            string revertQuery = "UPDATE blood_requests SET status = 'pending', fulfilled_by_hospital = NULL, fulfilled_at = NULL WHERE request_id = @requestId";
+                            string revertQuery = "UPDATE blood_requests SET status = 'pending', fulfilled_by_hospital = NULL, fulfilled_at = NULL WHERE request_id = @requestId AND requester_id = @hospitalId";
                             using (MySqlCommand revertCmd = new MySqlCommand(revertQuery, conn))
                             {
                                 revertCmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
+                                revertCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                                 revertCmd.ExecuteNonQuery();
                             }
                             ShowMessage("Insufficient inventory to fulfill this request. Status reverted to pending.", "danger");
@@ -402,7 +431,7 @@ namespace ClinicalBloodBank
                         }
                     }
 
-                    AddNotification(Convert.ToInt32(Session["AdminId"]), "Request Processed",
+                    AddNotification(Convert.ToInt32(Session["UserId"]), "Request Processed",
                         $"Blood request {hdnRequestId.Value} has been {ddlRequestStatus.SelectedValue}");
                     ShowMessage("Request processed successfully.", "success");
                     Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Processed request ID {hdnRequestId.Value}, Status: {ddlRequestStatus.SelectedValue}");
@@ -482,17 +511,18 @@ namespace ClinicalBloodBank
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string getRequestQuery = "SELECT blood_type, quantity_ml FROM blood_requests WHERE request_id = @requestId";
+                    string getRequestQuery = "SELECT blood_type, quantity_ml FROM blood_requests WHERE request_id = @requestId AND requester_id = @hospitalId";
                     string bloodType;
                     int quantityNeeded;
                     using (MySqlCommand cmd = new MySqlCommand(getRequestQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (!reader.Read())
                             {
-                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Request ID {hdnRequestId.Value} not found");
+                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Request ID {hdnRequestId.Value} not found for hospital ID {Session["UserId"]}");
                                 return false;
                             }
                             bloodType = reader["blood_type"].ToString();
@@ -502,10 +532,11 @@ namespace ClinicalBloodBank
 
                     string checkInventoryQuery = @"SELECT SUM(quantity_ml) as total_quantity 
                                                   FROM blood_inventory 
-                                                  WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP";
+                                                  WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP AND tested_by_hospital = @hospitalId";
                     using (MySqlCommand cmd = new MySqlCommand(checkInventoryQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@bloodType", bloodType);
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read() && reader["total_quantity"] != DBNull.Value)
@@ -513,13 +544,13 @@ namespace ClinicalBloodBank
                                 int totalAvailable = Convert.ToInt32(reader["total_quantity"]);
                                 if (totalAvailable < quantityNeeded)
                                 {
-                                    Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Insufficient inventory: {totalAvailable} ml available, {quantityNeeded} ml needed");
+                                    Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Insufficient inventory: {totalAvailable} ml available, {quantityNeeded} ml needed for hospital ID {Session["UserId"]}");
                                     return false;
                                 }
                             }
                             else
                             {
-                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - No available inventory for blood type {bloodType}");
+                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - No available inventory for blood type {bloodType} for hospital ID {Session["UserId"]}");
                                 return false;
                             }
                         }
@@ -527,11 +558,12 @@ namespace ClinicalBloodBank
 
                     string findInventoryQuery = @"SELECT inventory_id, quantity_ml 
                                                  FROM blood_inventory 
-                                                 WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP
+                                                 WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP AND tested_by_hospital = @hospitalId
                                                  ORDER BY expiration_date ASC";
                     using (MySqlCommand cmd = new MySqlCommand(findInventoryQuery, conn))
                     {
                         cmd.Parameters.AddWithValue("@bloodType", bloodType);
+                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read() && quantityNeeded > 0)
@@ -543,11 +575,12 @@ namespace ClinicalBloodBank
                                 string updateInventoryQuery = @"UPDATE blood_inventory 
                                                               SET quantity_ml = quantity_ml - @quantity,
                                                                   status = CASE WHEN quantity_ml - @quantity <= 0 THEN 'used' ELSE 'available' END
-                                                              WHERE inventory_id = @inventoryId";
+                                                              WHERE inventory_id = @inventoryId AND tested_by_hospital = @hospitalId";
                                 using (MySqlCommand updateCmd = new MySqlCommand(updateInventoryQuery, conn))
                                 {
                                     updateCmd.Parameters.AddWithValue("@quantity", quantityToUse);
                                     updateCmd.Parameters.AddWithValue("@inventoryId", inventoryId);
+                                    updateCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
                                     updateCmd.ExecuteNonQuery();
                                     Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Updated inventory ID {inventoryId}, used {quantityToUse} ml");
                                 }
@@ -572,19 +605,33 @@ namespace ClinicalBloodBank
                 return false;
             }
         }
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Debug.WriteLine($"[{DateTime.Now}] lnkLogout_Click - Logging out hospital user, UserId: {Session["UserId"]}");
+                Session.Abandon();
+                Response.Redirect("Login.aspx");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] lnkLogout_Click - Error: {ex.Message}");
+                ShowMessage("Error during logout: " + ex.Message, "danger");
+            }
+        }
 
-        private void AddNotification(int? adminId, string title, string message)
+        private void AddNotification(int? hospitalId, string title, string message)
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"INSERT INTO notifications (admin_id, title, message, is_read, created_at) 
-                                    VALUES (@adminId, @title, @message, 0, CURRENT_TIMESTAMP)";
+                    string query = @"INSERT INTO notifications (hospital_id, title, message, is_read, created_at) 
+                                    VALUES (@hospitalId, @title, @message, 0, CURRENT_TIMESTAMP)";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@adminId", adminId.HasValue ? (object)adminId.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@hospitalId", hospitalId.HasValue ? (object)hospitalId.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@title", title);
                         cmd.Parameters.AddWithValue("@message", message);
                         cmd.ExecuteNonQuery();

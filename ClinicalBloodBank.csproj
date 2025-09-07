@@ -246,7 +246,6 @@
     <Content Include="HospitalProfile.aspx" />
     <Content Include="HospitalReports.aspx" />
     <Content Include="Login.aspx" />
-    <Content Include="Logout.aspx" />
     <Content Include="ManageAdmins.aspx" />
     <Content Include="ManageBloodRequests.aspx" />
     <Content Include="ManageDonationAppointments.aspx" />
@@ -381,13 +380,6 @@
     </Compile>
     <Compile Include="Login.aspx.designer.cs">
       <DependentUpon>Login.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Logout.aspx.cs">
-      <DependentUpon>Logout.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Logout.aspx.designer.cs">
-      <DependentUpon>Logout.aspx</DependentUpon>
     </Compile>
     <Compile Include="ManageAdmins.aspx.cs">
       <DependentUpon>ManageAdmins.aspx</DependentUpon>

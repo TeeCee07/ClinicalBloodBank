@@ -24,13 +24,13 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
-        /// lnkLogout control.
+        /// litUserInitials control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkLogout;
+        protected global::System.Web.UI.WebControls.Literal litUserInitials;
 
         /// <summary>
         /// litUserName control.
@@ -40,15 +40,6 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litUserName;
-
-        /// <summary>
-        /// litUserInitials control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litUserInitials;
 
         /// <summary>
         /// pnlMessage control.
@@ -69,6 +60,15 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
+        /// txtHospitalId control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtHospitalId;
+
+        /// <summary>
         /// txtHospitalName control.
         /// </summary>
         /// <remarks>
@@ -87,67 +87,121 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvHospitalName;
 
         /// <summary>
-        /// txtEmail control.
+        /// txtContactEmail control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtEmail;
+        protected global::System.Web.UI.WebControls.TextBox txtContactEmail;
 
         /// <summary>
-        /// rfvEmail control.
+        /// rfvContactEmail control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvEmail;
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvContactEmail;
 
         /// <summary>
-        /// revEmail control.
+        /// revContactEmail control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.RegularExpressionValidator revEmail;
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator revContactEmail;
 
         /// <summary>
-        /// txtPhone control.
+        /// txtLicenseNumber control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPhone;
+        protected global::System.Web.UI.WebControls.TextBox txtLicenseNumber;
 
         /// <summary>
-        /// txtAddress control.
+        /// rfvLicenseNumber control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAddress;
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvLicenseNumber;
 
         /// <summary>
-        /// txtPassword control.
+        /// txtAddressLine1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPassword;
+        protected global::System.Web.UI.WebControls.TextBox txtAddressLine1;
 
         /// <summary>
-        /// rfvPassword control.
+        /// txtAddressLine2 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvPassword;
+        protected global::System.Web.UI.WebControls.TextBox txtAddressLine2;
+
+        /// <summary>
+        /// txtCity control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtCity;
+
+        /// <summary>
+        /// rfvCity control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvCity;
+
+        /// <summary>
+        /// txtProvince control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtProvince;
+
+        /// <summary>
+        /// rfvProvince control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvProvince;
+
+        /// <summary>
+        /// txtPostalCode control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtPostalCode;
+
+        /// <summary>
+        /// txtCountry control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtCountry;
 
         /// <summary>
         /// btnUpdateProfile control.
@@ -157,5 +211,86 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnUpdateProfile;
+
+        /// <summary>
+        /// txtCurrentPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtCurrentPassword;
+
+        /// <summary>
+        /// rfvCurrentPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvCurrentPassword;
+
+        /// <summary>
+        /// txtNewPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtNewPassword;
+
+        /// <summary>
+        /// rfvNewPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvNewPassword;
+
+        /// <summary>
+        /// revNewPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator revNewPassword;
+
+        /// <summary>
+        /// txtConfirmPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtConfirmPassword;
+
+        /// <summary>
+        /// rfvConfirmPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator rfvConfirmPassword;
+
+        /// <summary>
+        /// cvConfirmPassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CompareValidator cvConfirmPassword;
+
+        /// <summary>
+        /// btnChangePassword control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnChangePassword;
     }
 }

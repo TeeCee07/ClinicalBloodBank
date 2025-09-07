@@ -404,6 +404,13 @@ namespace ClinicalBloodBank
                 Debug.WriteLine($"[{DateTime.Now}] InsertNotification - MySQL Error: {ex.Message}");
             }
         }
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("Login.aspx");
+        }
+
 
         private void ShowMessage(string message, string type)
         {

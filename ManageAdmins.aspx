@@ -314,32 +314,38 @@
             <div class="sidebar-header">
                 <h3>Clinical Blood Bank</h3>
             </div>
-            <div class="sidebar-menu">
-                <a href="AdminDashboard.aspx" class="menu-item">
-                    <span class="menu-icon">🏠</span> Dashboard
-                </a>
-                <a href="ManageDonors.aspx" class="menu-item">
-                    <span class="menu-icon">👤</span> Manage Donors
-                </a>
-                <a href="ManageHospitals.aspx" class="menu-item">
-                    <span class="menu-icon">🏥</span> Manage Hospitals
-                </a>
-                <a href="ManageAdmins.aspx" class="menu-item active">
-                    <span class="menu-icon">🔑</span> Manage Admins
-                </a>
-                <a href="ManageInventory.aspx" class="menu-item">
-                    <span class="menu-icon">🩺</span> Blood Inventory
-                </a>
-                <a href="ManageBloodRequests.aspx" class="menu-item">
-                    <span class="menu-icon">🩺</span> Blood Requests
-                </a>
-                <a href="ManageAppointments.aspx" class="menu-item">
-                    <span class="menu-icon">📅</span> Appointments
-                </a>
-                <a href="Logout.aspx" class="menu-item">
-                    <span class="menu-icon">🚪</span> Logout
-                </a>
-            </div>
+           <div class="sidebar-menu">
+    <a href="AdminDashboard.aspx" class="menu-item active">
+        <span class="menu-icon">🏠</span> Dashboard
+    </a>
+    <a href="ManageDonors.aspx" class="menu-item">
+        <span class="menu-icon">👤</span> Manage Donors
+    </a>
+    <a href="ManageHospitals.aspx" class="menu-item">
+        <span class="menu-icon">🏥</span> Manage Hospitals
+    </a>
+    <a href="ManageAdmins.aspx" class="menu-item">
+        <span class="menu-icon">🔑</span> Manage Admins
+    </a>
+    <a href="ManageInventory.aspx" class="menu-item">
+        <span class="menu-icon">🩺</span> Blood Inventory
+    </a>
+    <a href="ManageBloodRequests.aspx" class="menu-item">
+        <span class="menu-icon">🩺</span> Blood Requests
+    </a>
+    <a href="ManageAppointments.aspx" class="menu-item">
+        <span class="menu-icon">📅</span> Appointments
+    </a>
+    <a href="ManageRewards.aspx" class="menu-item">
+        <span class="menu-icon">🎁</span> Manage Rewards
+    </a>
+    <a href="Reports.aspx" class="menu-item">
+        <span class="menu-icon">📊</span> Reports
+    </a>
+    <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
+        <span class="menu-icon">🚪</span> Logout
+    </asp:LinkButton>
+</div>
         </div>
 
         <div class="main-content">

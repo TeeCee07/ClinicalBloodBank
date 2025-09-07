@@ -1,5 +1,4 @@
-﻿
-<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HospitalDashboard.aspx.cs" Inherits="ClinicalBloodBank.HospitalDashboard" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HospitalDashboard.aspx.cs" Inherits="ClinicalBloodBank.HospitalDashboard" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -161,6 +160,7 @@
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: flex-start;
+            cursor: pointer;
         }
         .notification-item:last-child {
             border-bottom: none;
@@ -330,24 +330,13 @@
             color: #0288d1;
             border: 1px solid #90caf9;
         }
-        .pager {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .pager-button {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .pager-button.active {
-            background: #d32f2f;
-            color: white;
-            border-color: #d32f2f;
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
         }
     </style>
 </head>
@@ -376,9 +365,6 @@
                 <a href="HospitalReports.aspx" class="menu-item">
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <a href="Notifications.aspx" class="menu-item">
-                    <span class="menu-icon">🔔</span> Notifications
-                </a>
                 <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
                     <span class="menu-icon">🚪</span> Logout
                 </asp:LinkButton>
@@ -393,14 +379,14 @@
                 </div>
                 <div class="header-actions">
                     <div class="notification-container">
-                        <div class="notification-bell" id="notificationBell">
+                        <div class="notification-bell" id="notificationBell" aria-label="Notifications">
                             🔔
                             <span class="notification-badge" id="notificationCount" runat="server">0</span>
                         </div>
                         <div class="notification-dropdown" id="notificationDropdown">
                             <div class="notification-header">
                                 <div class="notification-title">Notifications</div>
-                                <asp:LinkButton ID="btnClearAll" runat="server" CssClass="clear-all-btn" OnClick="btnClearAll_Click">Clear All</asp:LinkButton>
+                                <asp:LinkButton ID="btnClearAll" runat="server" CssClass="clear-all-btn" OnClick="btnClearAll_Click">Mark All as Read</asp:LinkButton>
                             </div>
                             <div class="notification-list" id="notificationList" runat="server">
                                 <div class="no-notifications">Loading notifications...</div>
@@ -408,8 +394,8 @@
                         </div>
                     </div>
                     <div class="user-profile">
-                        <div class="user-avatar" id="userAvatar">
-                            <asp:Literal ID="litUserInitials" runat="server" Text="HD"></asp:Literal>
+                        <div class="user-avatar" id="userAvatar" aria-label="User Profile">
+                            <asp:Literal ID="litUserInitials" runat="server" Text="HO"></asp:Literal>
                         </div>
                         <div class="profile-dropdown" id="profileDropdown">
                             <a href="HospitalProfile.aspx" class="profile-dropdown-item">Profile</a>
@@ -426,7 +412,7 @@
             <div class="dashboard-cards">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">Total Inventory</div>
+                        <div class="card-title">Blood Inventory</div>
                         <div class="card-icon">🩺</div>
                     </div>
                     <div class="card-value">
@@ -511,6 +497,33 @@
                     }
                 });
             });
+
+            function markNotificationRead(notificationId) {
+                fetch('MarkNotificationRead.aspx', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notificationId: notificationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector(`.notification-item[onclick='markNotificationRead(${notificationId})']`).classList.remove('unread');
+                        let badge = document.getElementById('notificationCount');
+                        let count = parseInt(badge.innerText) - 1;
+                        badge.innerText = count >= 0 ? count : 0;
+                        // Reload GridView by triggering postback
+                        __doPostBack('<%= gvNotifications.UniqueID %>', '');
+                    } else {
+                        alert('Failed to mark notification as read: ' + data.message);
+                    }
+                })
+                    .catch(error => {
+                        console.error('Error marking notification as read:', error);
+                        alert('Error marking notification as read.');
+                    });
+            }
         </script>
     </form>
 </body>

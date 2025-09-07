@@ -421,9 +421,6 @@
                 <a href="HospitalReports.aspx" class="menu-item">S
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <a href="Notifications.aspx" class="menu-item">
-                    <span class="menu-icon">🔔</span> Notifications
-                </a>
                 <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
                     <span class="menu-icon">🚪</span> Logout
                 </asp:LinkButton>

@@ -1,4 +1,4 @@
-﻿%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HospitalReports.aspx.cs" Inherits="ClinicalBloodBank.HospitalReports" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HospitalReports.aspx.cs" Inherits="ClinicalBloodBank.HospitalReports" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -116,6 +116,28 @@
             font-size: 20px;
             font-weight: 600;
         }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-primary {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #1a2530;
+        }
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -131,20 +153,26 @@
             color: #2c3e50;
             font-weight: 600;
         }
-        .btn {
-            padding: 10px 20px;
-            border: none;
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
+            font-size: 14px;
         }
-        .btn-primary {
-            background: #d32f2f;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #b71c1c;
+        .form-control:focus {
+            border-color: #d32f2f;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
         }
         .alert {
             padding: 12px;
@@ -161,15 +189,23 @@
             color: #2e7d32;
             border: 1px solid #a5d6a7;
         }
-        .no-data {
-            padding: 20px;
-            text-align: center;
-            color: #7f8c8d;
-            font-style: italic;
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
         }
-        .chart-container {
-            max-width: 600px;
-            margin: 20px auto;
+        .form-col {
+            flex: 1;
+        }
+        .required-field::after {
+            content: " *";
+            color: #d32f2f;
+        }
+        .text-danger {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
         }
     </style>
 </head>
@@ -183,40 +219,38 @@
                 <a href="HospitalDashboard.aspx" class="menu-item">
                     <span class="menu-icon">🏠</span> Dashboard
                 </a>
-                <a href="HospitalBloodInventory.aspx" class="menu-item">
+                <a href="HospitalManageInventory.aspx" class="menu-item">
                     <span class="menu-icon">🩺</span> Blood Inventory
                 </a>
                 <a href="ManageRequests.aspx" class="menu-item">
-                    <span class="menu-icon">📋</span>  Blood Requests
+                    <span class="menu-icon">🩺</span> Blood Requests
                 </a>
-                <a href="ManageDonationAppointments.aspx" class="menu-item">
-                    <span class="menu-icon">📅</span> Manage Appointments
+                <a href="ManageAppointments.aspx" class="menu-item">
+                    <span class="menu-icon">📅</span> Appointments
                 </a>
                 <a href="HospitalProfile.aspx" class="menu-item">
-                    <span class="menu-icon">🏥</span> Profile
+                    <span class="menu-icon">👤</span> Profile
                 </a>
                 <a href="HospitalReports.aspx" class="menu-item active">
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <a href="Notifications.aspx" class="menu-item">
-                    <span class="menu-icon">🔔</span> Notifications
-                </a>
-                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
+                <a href="Logout.aspx" class="menu-item">
                     <span class="menu-icon">🚪</span> Logout
-                </asp:LinkButton>
+                </a>
             </div>
         </div>
 
         <div class="main-content">
             <div class="header">
                 <div class="welcome-text">
-                    <h1>Welcome, <asp:Literal ID="litUserName" runat="server" Text="Hospital"></asp:Literal></h1>
-                    <p>Hospital Reports</p>
+                    <h1>Hospital Reports</h1>
+                    <p>Hospital Panel</p>
                 </div>
                 <div class="user-profile">
                     <div class="user-avatar">
-                        <asp:Literal ID="litUserInitials" runat="server" Text="HD"></asp:Literal>
+                        <asp:Literal ID="litUserInitials" runat="server"></asp:Literal>
                     </div>
+                    <span><asp:Literal ID="litUserName" runat="server"></asp:Literal></span>
                 </div>
             </div>
 
@@ -226,66 +260,113 @@
 
             <div class="content-section">
                 <div class="section-header">
-                    <div class="section-title">Inventory Status</div>
-                    <asp:Button ID="btnExportInventory" runat="server" Text="Export to CSV" CssClass="btn btn-primary" OnClick="btnExportInventory_Click" />
+                    <div class="section-title">Report Filters</div>
                 </div>
-                <asp:GridView ID="gvInventory" runat="server" AutoGenerateColumns="False" CssClass="table" AllowPaging="True" PageSize="10">
-                    <Columns>
-                        <asp:BoundField DataField="blood_type" HeaderText="Blood Type" NullDisplayText="Unknown" />
-                        <asp:BoundField DataField="quantity_ml" HeaderText="Total Quantity (ml)" />
-                        <asp:BoundField DataField="status" HeaderText="Status" />
-                    </Columns>
-                </asp:GridView>
-                <asp:Label ID="lblNoInventory" runat="server" Text="No inventory data found." CssClass="no-data" Visible="false"></asp:Label>
-                <div class="chart-container">
-                    <canvas id="inventoryChart"></canvas>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="ddlReportType">Report Type</label>
+                            <asp:DropDownList ID="ddlReportType" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="blood_requests">Blood Requests</asp:ListItem>
+                                <asp:ListItem Value="inventory">Blood Inventory</asp:ListItem>
+                                <asp:ListItem Value="appointments">Appointments</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="ddlBloodType">Blood Type</label>
+                            <asp:DropDownList ID="ddlBloodType" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="">All Blood Types</asp:ListItem>
+                                <asp:ListItem Value="A+">A+</asp:ListItem>
+                                <asp:ListItem Value="A-">A-</asp:ListItem>
+                                <asp:ListItem Value="B+">B+</asp:ListItem>
+                                <asp:ListItem Value="B-">B-</asp:ListItem>
+                                <asp:ListItem Value="AB+">AB+</asp:ListItem>
+                                <asp:ListItem Value="AB-">AB-</asp:ListItem>
+                                <asp:ListItem Value="O+">O+</asp:ListItem>
+                                <asp:ListItem Value="O-">O-</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtStartDate">Start Date</label>
+                            <asp:TextBox ID="txtStartDate" runat="server" CssClass="form-control" TextMode="Date" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtEndDate">End Date</label>
+                            <asp:TextBox ID="txtEndDate" runat="server" CssClass="form-control" TextMode="Date" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="ddlStatus">Status</label>
+                            <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="">All Statuses</asp:ListItem>
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <asp:Button ID="btnGenerateReport" runat="server" Text="Generate Report" CssClass="btn btn-primary" OnClick="btnGenerateReport_Click" />
+                            <asp:Button ID="btnClearFilters" runat="server" Text="Clear Filters" CssClass="btn btn-secondary" OnClick="btnClearFilters_Click" CausesValidation="false" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="content-section">
                 <div class="section-header">
-                    <div class="section-title">Request Fulfillment</div>
-                    <asp:Button ID="btnExportRequests" runat="server" Text="Export to CSV" CssClass="btn btn-primary" OnClick="btnExportRequests_Click" />
+                    <div class="section-title">Report Results</div>
                 </div>
-                <asp:GridView ID="gvRequests" runat="server" AutoGenerateColumns="False" CssClass="table" AllowPaging="True" PageSize="10">
-                    <Columns>
-                        <asp:BoundField DataField="request_id" HeaderText="ID" />
-                        <asp:BoundField DataField="blood_type" HeaderText="Blood Type" />
-                        <asp:BoundField DataField="quantity_ml" HeaderText="Quantity (ml)" />
-                        <asp:BoundField DataField="status" HeaderText="Status" />
-                        <asp:BoundField DataField="fulfilled_at" HeaderText="Fulfilled At" DataFormatString="{0:yyyy-MM-dd HH:mm}" NullDisplayText="N/A" />
-                    </Columns>
+                <asp:GridView ID="gvReport" runat="server" AutoGenerateColumns="True" CssClass="table" AllowPaging="True" PageSize="10" OnPageIndexChanging="gvReport_PageIndexChanging">
                 </asp:GridView>
-                <asp:Label ID="lblNoRequests" runat="server" Text="No requests found." CssClass="no-data" Visible="false"></asp:Label>
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
         <script>
-            function renderInventoryChart(labels, data) {
-                if (!labels || !data || labels.length === 0 || data.length === 0) {
-                    document.getElementById('inventoryChart').style.display = 'none';
-                    return;
-                }
-                var ctx = document.getElementById('inventoryChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Blood Inventory by Type (ml)',
-                            data: data,
-                            backgroundColor: ['#d32f2f', '#2c3e50', '#388e3c', '#0288d1', '#ffca28', '#26a69a', '#7b1fa2', '#ff9800'],
-                            borderColor: ['#b71c1c', '#1a252f', '#2e7d32', '#01579b', '#ffb300', '#00897b', '#4a148c', '#f57c00'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'top' }, title: { display: true, text: 'Blood Inventory by Type' } }
+            // Dynamically update status options based on report type
+            function updateStatusOptions() {
+                var reportType = document.getElementById('<%= ddlReportType.ClientID %>').value;
+                var statusDropdown = document.getElementById('<%= ddlStatus.ClientID %>');
+                statusDropdown.innerHTML = '<option value="">All Statuses</option>';
+
+                if (reportType === 'blood_requests') {
+                    var options = ['pending', 'approved', 'rejected', 'fulfilled'];
+                    for (var i = 0; i < options.length; i++) {
+                        var option = document.createElement('option');
+                        option.value = options[i];
+                        option.text = options[i].charAt(0).toUpperCase() + options[i].slice(1);
+                        statusDropdown.appendChild(option);
                     }
-                });
+                } else if (reportType === 'inventory') {
+                    var options = ['available', 'reserved', 'used', 'expired'];
+                    for (var i = 0; i < options.length; i++) {
+                        var option = document.createElement('option');
+                        option.value = options[i];
+                        option.text = options[i].charAt(0).toUpperCase() + options[i].slice(1);
+                        statusDropdown.appendChild(option);
+                    }
+                } else if (reportType === 'appointments') {
+                    var options = ['scheduled', 'completed', 'cancelled', 'no_show'];
+                    for (var i = 0; i < options.length; i++) {
+                        var option = document.createElement('option');
+                        option.value = options[i];
+                        option.text = options[i].charAt(0).toUpperCase() + options[i].slice(1);
+                        statusDropdown.appendChild(option);
+                    }
+                }
             }
+
+            document.getElementById('<%= ddlReportType.ClientID %>').onchange = updateStatusOptions;
+            window.onload = updateStatusOptions;
         </script>
     </form>
 </body>

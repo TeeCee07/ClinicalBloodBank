@@ -24,13 +24,13 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
-        /// lnkLogout control.
+        /// litUserInitials control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton lnkLogout;
+        protected global::System.Web.UI.WebControls.Literal litUserInitials;
 
         /// <summary>
         /// litUserName control.
@@ -40,15 +40,6 @@ namespace ClinicalBloodBank
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litUserName;
-
-        /// <summary>
-        /// litUserInitials control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litUserInitials;
 
         /// <summary>
         /// pnlMessage control.
@@ -69,84 +60,75 @@ namespace ClinicalBloodBank
         protected global::System.Web.UI.WebControls.Label lblMessage;
 
         /// <summary>
-        /// btnExportInventory control.
+        /// ddlReportType control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnExportInventory;
+        protected global::System.Web.UI.WebControls.DropDownList ddlReportType;
 
         /// <summary>
-        /// gvInventory control.
+        /// ddlBloodType control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvInventory;
+        protected global::System.Web.UI.WebControls.DropDownList ddlBloodType;
 
         /// <summary>
-        /// lblNoInventory control.
+        /// txtStartDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblNoInventory;
+        protected global::System.Web.UI.WebControls.TextBox txtStartDate;
 
         /// <summary>
-        /// btnExportTests control.
+        /// txtEndDate control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnExportTests;
+        protected global::System.Web.UI.WebControls.TextBox txtEndDate;
 
         /// <summary>
-        /// gvTestResults control.
+        /// ddlStatus control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvTestResults;
+        protected global::System.Web.UI.WebControls.DropDownList ddlStatus;
 
         /// <summary>
-        /// lblNoTests control.
+        /// btnGenerateReport control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblNoTests;
+        protected global::System.Web.UI.WebControls.Button btnGenerateReport;
 
         /// <summary>
-        /// btnExportRequests control.
+        /// btnClearFilters control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnExportRequests;
+        protected global::System.Web.UI.WebControls.Button btnClearFilters;
 
         /// <summary>
-        /// gvRequests control.
+        /// gvReport control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvRequests;
-
-        /// <summary>
-        /// lblNoRequests control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblNoRequests;
+        protected global::System.Web.UI.WebControls.GridView gvReport;
     }
 }

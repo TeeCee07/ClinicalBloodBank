@@ -116,6 +116,28 @@
             font-size: 20px;
             font-weight: 600;
         }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-primary {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #b71c1c;
+        }
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #1a2530;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -137,21 +159,6 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
         }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-        .btn-primary {
-            background: #d32f2f;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #b71c1c;
-        }
         .alert {
             padding: 12px;
             border-radius: 6px;
@@ -167,6 +174,14 @@
             color: #2e7d32;
             border: 1px solid #a5d6a7;
         }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-col {
+            flex: 1;
+        }
         .required-field::after {
             content: " *";
             color: #d32f2f;
@@ -176,6 +191,10 @@
             font-size: 12px;
             margin-top: 5px;
             display: block;
+        }
+        .form-control[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -193,36 +212,34 @@
                     <span class="menu-icon">🩺</span> Blood Inventory
                 </a>
                 <a href="ManageRequests.aspx" class="menu-item">
-                    <span class="menu-icon">📋</span> Manage Requests
+                    <span class="menu-icon">🩺</span> Blood Requests
                 </a>
-                <a href="ManageDonationAppointments.aspx" class="menu-item">
-                    <span class="menu-icon">📅</span> Manage Appointments
+                <a href="ManageAppointments.aspx" class="menu-item">
+                    <span class="menu-icon">📅</span> Appointments
                 </a>
-                <a href="HospitalProfile.aspx" class="menu-item active">
-                    <span class="menu-icon">🏥</span> Profile
-                </a>
-                <a href="HospitalReports.aspx" class="menu-item">
+                <a href="Reports.aspx" class="menu-item">
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <a href="Notifications.aspx" class="menu-item">
-                    <span class="menu-icon">🔔</span> Notifications
+                <a href="HospitalProfile.aspx" class="menu-item active">
+                    <span class="menu-icon">👤</span> Profile
                 </a>
-                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
+                <a href="Logout.aspx" class="menu-item">
                     <span class="menu-icon">🚪</span> Logout
-                </asp:LinkButton>
+                </a>
             </div>
         </div>
 
         <div class="main-content">
             <div class="header">
                 <div class="welcome-text">
-                    <h1>Welcome, <asp:Literal ID="litUserName" runat="server" Text="Hospital"></asp:Literal></h1>
-                    <p>Hospital Profile</p>
+                    <h1>Hospital Profile</h1>
+                    <p>Hospital Panel</p>
                 </div>
                 <div class="user-profile">
                     <div class="user-avatar">
-                        <asp:Literal ID="litUserInitials" runat="server" Text="HD"></asp:Literal>
+                        <asp:Literal ID="litUserInitials" runat="server"></asp:Literal>
                     </div>
+                    <span><asp:Literal ID="litUserName" runat="server"></asp:Literal></span>
                 </div>
             </div>
 
@@ -232,39 +249,132 @@
 
             <div class="content-section">
                 <div class="section-header">
-                    <div class="section-title">Update Profile</div>
+                    <div class="section-title">Profile Details</div>
                 </div>
-                <div class="form-group">
-                    <label for="txtHospitalName" class="required-field">Hospital Name</label>
-                    <asp:TextBox ID="txtHospitalName" runat="server" CssClass="form-control"></asp:TextBox>
-                    <asp:RequiredFieldValidator ID="rfvHospitalName" runat="server" ControlToValidate="txtHospitalName"
-                        ErrorMessage="Hospital name is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtHospitalId">Hospital ID</label>
+                            <asp:TextBox ID="txtHospitalId" runat="server" CssClass="form-control" ReadOnly="true" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtHospitalName" class="required-field">Hospital Name</label>
+                            <asp:TextBox ID="txtHospitalName" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvHospitalName" runat="server" ControlToValidate="txtHospitalName"
+                                ErrorMessage="Hospital name is required" Display="Dynamic" CssClass="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtEmail" class="required-field">Contact Email</label>
-                    <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
-                    <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtEmail"
-                        ErrorMessage="Email is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
-                    <asp:RegularExpressionValidator ID="revEmail" runat="server" ControlToValidate="txtEmail"
-                        ErrorMessage="Invalid email format" Display="Dynamic" CssClass="text-danger"
-                        ValidationExpression="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$"></asp:RegularExpressionValidator>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtContactEmail" class="required-field">Contact Email</label>
+                            <asp:TextBox ID="txtContactEmail" runat="server" CssClass="form-control" TextMode="Email" />
+                            <asp:RequiredFieldValidator ID="rfvContactEmail" runat="server" ControlToValidate="txtContactEmail"
+                                ErrorMessage="Contact email is required" Display="Dynamic" CssClass="text-danger" />
+                            <asp:RegularExpressionValidator ID="revContactEmail" runat="server" ControlToValidate="txtContactEmail"
+                                ErrorMessage="Invalid email format" Display="Dynamic" CssClass="text-danger"
+                                ValidationExpression="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtLicenseNumber" class="required-field">License Number</label>
+                            <asp:TextBox ID="txtLicenseNumber" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvLicenseNumber" runat="server" ControlToValidate="txtLicenseNumber"
+                                ErrorMessage="License number is required" Display="Dynamic" CssClass="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtPhone">Phone Number</label>
-                    <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" TextMode="Phone"></asp:TextBox>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAddressLine1">Address Line 1</label>
+                            <asp:TextBox ID="txtAddressLine1" runat="server" CssClass="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtAddressLine2">Address Line 2</label>
+                            <asp:TextBox ID="txtAddressLine2" runat="server" CssClass="form-control" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtAddress">Address</label>
-                    <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="4"></asp:TextBox>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtCity" class="required-field">City</label>
+                            <asp:TextBox ID="txtCity" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvCity" runat="server" ControlToValidate="txtCity"
+                                ErrorMessage="City is required" Display="Dynamic" CssClass="text-danger" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtProvince" class="required-field">Province</label>
+                            <asp:TextBox ID="txtProvince" runat="server" CssClass="form-control" />
+                            <asp:RequiredFieldValidator ID="rfvProvince" runat="server" ControlToValidate="txtProvince"
+                                ErrorMessage="Province is required" Display="Dynamic" CssClass="text-danger" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="txtPassword" class="required-field">Password</label>
-                    <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
-                    <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ControlToValidate="txtPassword"
-                        ErrorMessage="Password is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtPostalCode">Postal Code</label>
+                            <asp:TextBox ID="txtPostalCode" runat="server" CssClass="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtCountry">Country</label>
+                            <asp:TextBox ID="txtCountry" runat="server" CssClass="form-control" ReadOnly="true" Text="South Africa" />
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <asp:Button ID="btnUpdateProfile" runat="server" Text="Update Profile" CssClass="btn btn-primary" OnClick="btnUpdateProfile_Click" />
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <div class="section-title">Change Password</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtCurrentPassword" class="required-field">Current Password</label>
+                            <asp:TextBox ID="txtCurrentPassword" runat="server" CssClass="form-control" TextMode="Password" />
+                            <asp:RequiredFieldValidator ID="rfvCurrentPassword" runat="server" ControlToValidate="txtCurrentPassword"
+                                ErrorMessage="Current password is required" Display="Dynamic" CssClass="text-danger" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtNewPassword" class="required-field">New Password</label>
+                            <asp:TextBox ID="txtNewPassword" runat="server" CssClass="form-control" TextMode="Password" />
+                            <asp:RequiredFieldValidator ID="rfvNewPassword" runat="server" ControlToValidate="txtNewPassword"
+                                ErrorMessage="New password is required" Display="Dynamic" CssClass="text-danger" />
+                            <asp:RegularExpressionValidator ID="revNewPassword" runat="server" ControlToValidate="txtNewPassword"
+                                ErrorMessage="Password must be at least 8 characters, including 1 uppercase, 1 lowercase, and 1 number"
+                                Display="Dynamic" CssClass="text-danger"
+                                ValidationExpression="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="txtConfirmPassword" class="required-field">Confirm New Password</label>
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" CssClass="form-control" TextMode="Password" />
+                    <asp:RequiredFieldValidator ID="rfvConfirmPassword" runat="server" ControlToValidate="txtConfirmPassword"
+                        ErrorMessage="Confirm password is required" Display="Dynamic" CssClass="text-danger" />
+                    <asp:CompareValidator ID="cvConfirmPassword" runat="server" ControlToValidate="txtConfirmPassword"
+                        ControlToCompare="txtNewPassword" ErrorMessage="Passwords do not match" Display="Dynamic" CssClass="text-danger" />
+                </div>
+                <div class="form-group">
+                    <asp:Button ID="btnChangePassword" runat="server" Text="Change Password" CssClass="btn btn-primary" OnClick="btnChangePassword_Click" />
                 </div>
             </div>
         </div>

@@ -655,6 +655,13 @@ namespace ClinicalBloodBank
                 }
             }
         }
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("Login.aspx");
+        }
+
 
         protected override void Render(HtmlTextWriter writer)
         {

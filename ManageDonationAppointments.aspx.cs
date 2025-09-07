@@ -588,6 +588,7 @@ namespace ClinicalBloodBank
             return true;
         }
 
+
         private void AddNotification(int hospitalId, string title, string message)
         {
             try

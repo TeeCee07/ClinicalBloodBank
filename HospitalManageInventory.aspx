@@ -147,6 +147,7 @@
             color: #d32f2f;
             cursor: pointer;
             font-size: 14px;
+            margin-left: 10px;
         }
         .clear-all-btn:hover {
             text-decoration: underline;
@@ -160,6 +161,7 @@
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: flex-start;
+            cursor: pointer;
         }
         .notification-item:last-child {
             border-bottom: none;
@@ -424,9 +426,7 @@
                 <a href="HospitalReports.aspx" class="menu-item">
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <a href="Notifications.aspx" class="menu-item">
-                    <span class="menu-icon">🔔</span> Notifications
-                </a>
+
                 <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
                     <span class="menu-icon">🚪</span> Logout
                 </asp:LinkButton>
@@ -441,14 +441,17 @@
                 </div>
                 <div class="header-actions">
                     <div class="notification-container">
-                        <div class="notification-bell" id="notificationBell">
+                        <div class="notification-bell" id="notificationBell" aria-label="Notifications">
                             🔔
                             <span class="notification-badge" id="notificationCount" runat="server">0</span>
                         </div>
                         <div class="notification-dropdown" id="notificationDropdown">
                             <div class="notification-header">
                                 <div class="notification-title">Notifications</div>
-                                <asp:LinkButton ID="btnClearAll" runat="server" CssClass="clear-all-btn" OnClick="btnClearAll_Click">Clear All</asp:LinkButton>
+                                <div>
+                                    <asp:LinkButton ID="btnClearAll" runat="server" CssClass="clear-all-btn" OnClick="btnClearAll_Click">Mark All as Read</asp:LinkButton>
+                                    <asp:LinkButton ID="btnClearNotifications" runat="server" CssClass="clear-all-btn" OnClick="btnClearNotifications_Click">Clear All</asp:LinkButton>
+                                </div>
                             </div>
                             <div class="notification-list" id="notificationList" runat="server">
                                 <div class="no-notifications">Loading notifications...</div>
@@ -456,8 +459,8 @@
                         </div>
                     </div>
                     <div class="user-profile">
-                        <div class="user-avatar" id="userAvatar">
-                            <asp:Literal ID="litUserInitials" runat="server" Text="HD"></asp:Literal>
+                        <div class="user-avatar" id="userAvatar" aria-label="User Profile">
+                            <asp:Literal ID="litUserInitials" runat="server" Text="HO"></asp:Literal>
                         </div>
                         <div class="profile-dropdown" id="profileDropdown">
                             <a href="HospitalProfile.aspx" class="profile-dropdown-item">Profile</a>
@@ -526,7 +529,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="ddlDonor" class="required-field">Donor</label>
-                            <asp:DropDownList ID="ddlDonor" runat="server" CssClass="form-control" />
+                            <asp:DropDownList ID="ddlDonor" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlDonor_SelectedIndexChanged" />
                             <asp:RequiredFieldValidator ID="rfvDonor" runat="server" ControlToValidate="ddlDonor"
                                 ErrorMessage="Donor is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
                         </div>
@@ -656,6 +659,32 @@
                         notificationDropdown.classList.remove('show');
                     }
                 });
+
+                // Handle notification click to mark as read
+                function markNotificationRead(notificationId) {
+                    fetch('MarkNotificationRead.aspx', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ notificationId: notificationId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.querySelector(`.notification-item[onclick='markNotificationRead(${notificationId})']`).classList.remove('unread');
+                                let badge = document.getElementById('notificationCount');
+                                let count = parseInt(badge.innerText) - 1;
+                                badge.innerText = count >= 0 ? count : 0;
+                            } else {
+                                alert('Failed to mark notification as read: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error marking notification as read:', error);
+                            alert('Error marking notification as read.');
+                        });
+                }
             });
         </script>
     </form>

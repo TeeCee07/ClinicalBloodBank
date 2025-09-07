@@ -1,5 +1,4 @@
-﻿
-<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageRequests.aspx.cs" Inherits="ClinicalBloodBank.ManageRequests" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageRequests.aspx.cs" Inherits="ClinicalBloodBank.ManageRequests" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -277,31 +276,28 @@
             <div class="sidebar-header">
                 <h3>Clinical Blood Bank</h3>
             </div>
-            <div class="sidebar-menu">
-                <a href="AdminDashboard.aspx" class="menu-item">
+                        <div class="sidebar-menu">
+                <a href="HospitalDashboard.aspx" class="menu-item active">
                     <span class="menu-icon">🏠</span> Dashboard
                 </a>
-                <a href="ManageDonors.aspx" class="menu-item">
-                    <span class="menu-icon">👤</span> Manage Donors
-                </a>
-                <a href="ManageHospitals.aspx" class="menu-item">
-                    <span class="menu-icon">🏥</span> Manage Hospitals
-                </a>
-                <a href="ManageAdmins.aspx" class="menu-item">
-                    <span class="menu-icon">🔑</span> Manage Admins
-                </a>
-                <a href="ManageInventory.aspx" class="menu-item">
+                <a href="HospitalManageInventory.aspx" class="menu-item">
                     <span class="menu-icon">🩺</span> Blood Inventory
                 </a>
-                <a href="ManageRequests.aspx" class="menu-item active">
-                    <span class="menu-icon">🩺</span> Blood Requests
+                <a href="ManageRequests.aspx" class="menu-item">
+                    <span class="menu-icon">📋</span> Blood Requests
                 </a>
-                <a href="ManageAppointments.aspx" class="menu-item">
-                    <span class="menu-icon">📅</span> Appointments
+                <a href="ManageDonationAppointments.aspx" class="menu-item">
+                    <span class="menu-icon">📅</span> Manage Appointments
                 </a>
-                <a href="Logout.aspx" class="menu-item">
+                <a href="HospitalProfile.aspx" class="menu-item">
+                    <span class="menu-icon">🏥</span> Profile
+                </a>
+                <a href="HospitalReports.aspx" class="menu-item">
+                    <span class="menu-icon">📊</span> Reports
+                </a>
+                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
                     <span class="menu-icon">🚪</span> Logout
-                </a>
+                </asp:LinkButton>
             </div>
         </div>
 
@@ -309,7 +305,7 @@
             <div class="header">
                 <div class="welcome-text">
                     <h1>Manage Blood Requests</h1>
-                    <p>Admin Panel</p>
+                    <p>Hospital Panel</p>
                 </div>
                 <div class="user-profile">
                     <div class="user-avatar">
