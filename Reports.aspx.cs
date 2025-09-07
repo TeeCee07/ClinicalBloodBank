@@ -252,14 +252,7 @@ namespace ClinicalBloodBank
                 gvReport.Columns.Add(new BoundField { DataField = "requested_at", HeaderText = "Requested At", DataFormatString = "{0:yyyy-MM-dd HH:mm}" });
                 gvReport.Columns.Add(new BoundField { DataField = "status", HeaderText = "Status" });
             }
-            else if (reportType == "rewards")
-            {
-                gvReport.Columns.Add(new BoundField { DataField = "reward_name", HeaderText = "Reward Name" });
-                gvReport.Columns.Add(new BoundField { DataField = "description", HeaderText = "Description" });
-                gvReport.Columns.Add(new BoundField { DataField = "points_required", HeaderText = "Points Required" });
-                gvReport.Columns.Add(new BoundField { DataField = "is_active", HeaderText = "Active", DataFormatString = "{0:Yes;No}" });
-                gvReport.Columns.Add(new BoundField { DataField = "created_at", HeaderText = "Created At", DataFormatString = "{0:yyyy-MM-dd HH:mm}" });
-            }
+            
 
             gvReport.DataSource = dt;
             gvReport.DataBind();
@@ -314,19 +307,7 @@ namespace ClinicalBloodBank
                     labels.AddRange(requestStatuses.Keys);
                     data.AddRange(requestStatuses.Values);
                     break;
-                case "rewards":
-                    chartTitle = "Rewards by Status";
-                    labels.Add("Active");
-                    labels.Add("Inactive");
-                    int activeRewards = 0, inactiveRewards = 0;
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        if (Convert.ToBoolean(row["is_active"])) activeRewards++;
-                        else inactiveRewards++;
-                    }
-                    data.Add(activeRewards);
-                    data.Add(inactiveRewards);
-                    break;
+               
             }
 
             string script = $"renderChart({Newtonsoft.Json.JsonConvert.SerializeObject(labels)}, {Newtonsoft.Json.JsonConvert.SerializeObject(data)}, '{chartType}', '{chartTitle}');";

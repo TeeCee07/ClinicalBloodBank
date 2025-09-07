@@ -231,9 +231,7 @@
                 <a href="ManageAppointments.aspx" class="menu-item">
                     <span class="menu-icon">📅</span> Appointments
                 </a>
-                <a href="ManageRewards.aspx" class="menu-item">
-                    <span class="menu-icon">🎁</span> Manage Rewards
-                </a>
+                
                 <a href="Reports.aspx" class="menu-item active">
                     <span class="menu-icon">📊</span> Reports
                 </a>
@@ -273,7 +271,7 @@
                                 <asp:ListItem Value="donors">Donor Statistics</asp:ListItem>
                                 <asp:ListItem Value="inventory">Blood Inventory</asp:ListItem>
                                 <asp:ListItem Value="requests">Blood Requests</asp:ListItem>
-                                <asp:ListItem Value="rewards">Reward Redemptions</asp:ListItem>
+                                
                             </asp:DropDownList>
                         </div>
                     </div>

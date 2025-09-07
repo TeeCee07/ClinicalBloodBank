@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Configuration;
 using System.Data;
-using System.Collections.Generic;
 using MySql.Data.MySqlClient;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using System.Diagnostics;
+using System.Web.UI.WebControls;
 
 namespace ClinicalBloodBank
 {
     public partial class ManageRequests : System.Web.UI.Page
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["ClinicalBloodBankDB"].ConnectionString;
-        private List<string> controlsToRegister = new List<string>();
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -25,13 +22,10 @@ namespace ClinicalBloodBank
 
             try
             {
-                this.PreRender += new EventHandler(Page_PreRender);
                 if (!IsPostBack)
                 {
                     LoadUserInfo();
-                    LoadBloodRequests();
-                    LoadHospitalDropdown();
-                    LoadBloodTypeDropdown();
+                    LoadRequests();
                 }
             }
             catch (MySqlException ex)
@@ -98,272 +92,242 @@ namespace ClinicalBloodBank
             return initials.Length > 2 ? initials.Substring(0, 2) : initials;
         }
 
-        private void LoadBloodRequests()
+        private void LoadRequests()
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"SELECT r.request_id, r.blood_type, r.quantity_ml, r.urgency, r.reason, r.status, r.requested_at,
-                                    CASE 
-                                        WHEN r.requester_role = 'donor' THEN CONCAT(d.first_name, ' ', d.last_name)
-                                        WHEN r.requester_role = 'hospital' THEN h.hospital_name
-                                        ELSE 'Unknown'
-                                    END as requester_name
-                                    FROM blood_requests r
-                                    LEFT JOIN donors d ON r.requester_id = d.donor_id AND r.requester_role = 'donor'
-                                    LEFT JOIN hospitals h ON r.requester_id = h.hospital_id AND r.requester_role = 'hospital'
-                                    WHERE r.requester_id = @hospitalId AND r.requester_role = 'hospital'";
+                    string query = @"SELECT br.request_id AS 'Request ID', h.hospital_name AS 'Requester Hospital', 
+                                    br.requester_id AS 'Requester ID', br.blood_type AS 'Blood Type', 
+                                    br.quantity_ml AS 'Quantity (ml)', br.urgency AS Urgency, br.status AS Status, 
+                                    br.reason AS Reason, br.requested_at AS 'Requested At'
+                                    FROM blood_requests br
+                                    LEFT JOIN hospitals h ON br.requester_id = h.hospital_id
+                                    WHERE br.status = 'pending'";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                        {
+                            DataTable dt = new DataTable();
+                            adapter.Fill(dt);
+                            gvRequests.DataSource = dt;
+                            gvRequests.DataBind();
+                            Debug.WriteLine($"[{DateTime.Now}] LoadRequests - Loaded {dt.Rows.Count} pending requests for hospital ID: {Session["UserId"]}");
+                        }
+                    }
+                }
+            }
+            catch (MySqlException ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadRequests - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
+                ShowMessage("Error loading requests: " + ex.Message, "danger");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[{DateTime.Now}] LoadRequests - Error: {ex.Message}");
+                ShowMessage("Error loading requests: " + ex.Message, "danger");
+            }
+        }
 
-                    string bloodType = ddlFilterBloodType.SelectedValue;
-                    string status = ddlFilterStatus.SelectedValue;
-                    string urgency = ddlFilterUrgency.SelectedValue;
+        protected void btnCreateRequest_Click(object sender, EventArgs e)
+        {
+            if (!Page.IsValid) return;
 
-                    if (!string.IsNullOrEmpty(bloodType))
-                        query += " AND r.blood_type = @BloodType";
-                    if (!string.IsNullOrEmpty(status))
-                        query += " AND r.status = @Status";
-                    if (!string.IsNullOrEmpty(urgency))
-                        query += " AND r.urgency = @Urgency";
-
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = @"INSERT INTO blood_requests (requester_id, blood_type, quantity_ml, urgency, status, reason, patient_details, requested_at)
+                                    VALUES (@hospitalId, @bloodType, @quantity, @urgency, 'pending', @reason, @patientDetails, CURRENT_TIMESTAMP)";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        if (!string.IsNullOrEmpty(bloodType))
-                            cmd.Parameters.AddWithValue("@BloodType", bloodType);
-                        if (!string.IsNullOrEmpty(status))
-                            cmd.Parameters.AddWithValue("@Status", status);
-                        if (!string.IsNullOrEmpty(urgency))
-                            cmd.Parameters.AddWithValue("@Urgency", urgency);
+                        cmd.Parameters.AddWithValue("@bloodType", ddlBloodType.SelectedValue);
+                        cmd.Parameters.AddWithValue("@quantity", Convert.ToInt32(txtQuantity.Text));
+                        cmd.Parameters.AddWithValue("@urgency", ddlUrgency.SelectedValue);
+                        cmd.Parameters.AddWithValue("@reason", txtReason.Text.Trim());
+                        cmd.Parameters.AddWithValue("@patientDetails", string.IsNullOrEmpty(txtPatientDetails.Text) ? (object)DBNull.Value : txtPatientDetails.Text.Trim());
+                        int rowsAffected = cmd.ExecuteNonQuery();
 
-                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        adapter.Fill(dt);
-                        gvBloodRequests.DataSource = dt;
-                        gvBloodRequests.DataBind();
-
-                        if (dt.Rows.Count == 0)
-                            ShowMessage("No blood requests found.", "info");
+                        if (rowsAffected > 0)
+                        {
+                            AddNotification(Convert.ToInt32(Session["UserId"]), "Blood Request Created", $"New blood request for {ddlBloodType.SelectedValue} created.");
+                            ShowMessage("Blood request created successfully.", "success");
+                            LoadRequests();
+                            ClearForm();
+                            Debug.WriteLine($"[{DateTime.Now}] btnCreateRequest_Click - Created request for hospital ID: {Session["UserId"]}, Blood Type: {ddlBloodType.SelectedValue}");
+                        }
                         else
-                            ShowMessage($"{dt.Rows.Count} blood request(s) found.", "success");
-
-                        Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - Retrieved {dt.Rows.Count} requests for hospital ID {Session["UserId"]}");
+                        {
+                            ShowMessage("Failed to create blood request.", "danger");
+                            Debug.WriteLine($"[{DateTime.Now}] btnCreateRequest_Click - No rows affected for hospital ID: {Session["UserId"]}");
+                        }
                     }
                 }
             }
             catch (MySqlException ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
-                ShowMessage("Error loading blood requests: " + ex.Message, "danger");
-                gvBloodRequests.DataSource = null;
-                gvBloodRequests.DataBind();
+                Debug.WriteLine($"[{DateTime.Now}] btnCreateRequest_Click - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
+                ShowMessage("Error creating request: " + ex.Message, "danger");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadBloodRequests - Error: {ex.Message}, StackTrace: {ex.StackTrace}");
-                ShowMessage("Error loading blood requests: " + ex.Message, "danger");
-                gvBloodRequests.DataSource = null;
-                gvBloodRequests.DataBind();
+                Debug.WriteLine($"[{DateTime.Now}] btnCreateRequest_Click - Error: {ex.Message}");
+                ShowMessage("Error creating request: " + ex.Message, "danger");
             }
         }
 
-        private void LoadHospitalDropdown()
+        protected void gvRequests_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
-                    string query = @"SELECT hospital_id, hospital_name 
-                                    FROM hospitals 
-                                    WHERE is_verified = 1 AND hospital_id = @hospitalId";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        adapter.Fill(dt);
-                        ddlFulfillHospital.DataSource = dt;
-                        ddlFulfillHospital.DataTextField = "hospital_name";
-                        ddlFulfillHospital.DataValueField = "hospital_id";
-                        ddlFulfillHospital.DataBind();
-                        ddlFulfillHospital.Items.Insert(0, new ListItem("Select Hospital", ""));
-                        Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - Loaded {dt.Rows.Count} hospitals for hospital ID {Session["UserId"]}");
-                    }
-                }
-            }
-            catch (MySqlException ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
-                ShowMessage("Error loading hospital dropdown: " + ex.Message, "danger");
+                gvRequests.PageIndex = e.NewPageIndex;
+                LoadRequests();
+                Debug.WriteLine($"[{DateTime.Now}] gvRequests_PageIndexChanging - Changed to page: {e.NewPageIndex}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadHospitalDropdown - Error: {ex.Message}");
-                ShowMessage("Error loading hospital dropdown: " + ex.Message, "danger");
-            }
-        }
-
-        private void LoadBloodTypeDropdown()
-        {
-            try
-            {
-                ddlFilterBloodType.Items.Clear();
-                ddlFilterBloodType.Items.Add(new ListItem("All Blood Types", ""));
-                ddlFilterBloodType.Items.Add(new ListItem("A+", "A+"));
-                ddlFilterBloodType.Items.Add(new ListItem("A-", "A-"));
-                ddlFilterBloodType.Items.Add(new ListItem("B+", "B+"));
-                ddlFilterBloodType.Items.Add(new ListItem("B-", "B-"));
-                ddlFilterBloodType.Items.Add(new ListItem("AB+", "AB+"));
-                ddlFilterBloodType.Items.Add(new ListItem("AB-", "AB-"));
-                ddlFilterBloodType.Items.Add(new ListItem("O+", "O+"));
-                ddlFilterBloodType.Items.Add(new ListItem("O-", "O-"));
-                Debug.WriteLine($"[{DateTime.Now}] LoadBloodTypeDropdown - Loaded blood types");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] LoadBloodTypeDropdown - Error: {ex.Message}");
-                ShowMessage("Error loading blood type dropdown: " + ex.Message, "danger");
-            }
-        }
-
-        protected void btnFilter_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                LoadBloodRequests();
-                Debug.WriteLine($"[{DateTime.Now}] btnFilter_Click - Applied filters: BloodType={ddlFilterBloodType.SelectedValue}, Status={ddlFilterStatus.SelectedValue}, Urgency={ddlFilterUrgency.SelectedValue}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] btnFilter_Click - Error: {ex.Message}");
-                ShowMessage("Error applying filter: " + ex.Message, "danger");
-            }
-        }
-
-        protected void btnClearFilter_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                ddlFilterBloodType.SelectedIndex = 0;
-                ddlFilterStatus.SelectedIndex = 0;
-                ddlFilterUrgency.SelectedIndex = 0;
-                LoadBloodRequests();
-                Debug.WriteLine($"[{DateTime.Now}] btnClearFilter_Click - Cleared filters");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] btnClearFilter_Click - Error: {ex.Message}");
-                ShowMessage("Error clearing filter: " + ex.Message, "danger");
-            }
-        }
-
-        protected void gvBloodRequests_RowEditing(object sender, GridViewEditEventArgs e)
-        {
-            try
-            {
-                string requestId = gvBloodRequests.DataKeys[e.NewEditIndex].Value.ToString();
-                LoadRequestData(requestId);
-                gvBloodRequests.EditIndex = -1;
-                LoadBloodRequests();
-                Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_RowEditing - Loaded request ID: {requestId}");
-            }
-            catch (MySqlException ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_RowEditing - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
-                ShowMessage("Error loading request data: " + ex.Message, "danger");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_RowEditing - Error: {ex.Message}");
-                ShowMessage("Error loading request data: " + ex.Message, "danger");
-            }
-        }
-
-        protected void gvBloodRequests_PageIndexChanging(object sender, GridViewPageEventArgs e)
-        {
-            try
-            {
-                gvBloodRequests.PageIndex = e.NewPageIndex;
-                LoadBloodRequests();
-                Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_PageIndexChanging - Changed to page: {e.NewPageIndex}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_PageIndexChanging - Error: {ex.Message}");
+                Debug.WriteLine($"[{DateTime.Now}] gvRequests_PageIndexChanging - Error: {ex.Message}");
                 ShowMessage("Error changing page: " + ex.Message, "danger");
             }
         }
 
-        protected void gvBloodRequests_RowDataBound(object sender, GridViewRowEventArgs e)
-        {
-            if (e.Row.RowType == DataControlRowType.DataRow)
-            {
-                try
-                {
-                    Button btnEdit = (Button)e.Row.FindControl("btnEdit");
-                    if (btnEdit != null)
-                    {
-                        controlsToRegister.Add(btnEdit.UniqueID);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[{DateTime.Now}] gvBloodRequests_RowDataBound - Error: {ex.Message}");
-                    ShowMessage("Error binding row: " + ex.Message, "danger");
-                }
-            }
-        }
-
-        private void LoadRequestData(string requestId)
+        protected void gvRequests_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             try
             {
+                int requestId = Convert.ToInt32(e.CommandArgument);
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"SELECT r.request_id, r.blood_type, r.quantity_ml, r.urgency, r.reason, r.status, 
-                                    r.fulfilled_by_hospital, r.patient_details as notes, r.requested_at,
-                                    CASE 
-                                        WHEN r.requester_role = 'donor' THEN CONCAT(d.first_name, ' ', d.last_name)
-                                        WHEN r.requester_role = 'hospital' THEN h.hospital_name
-                                        ELSE 'Unknown'
-                                    END as requester_name
-                                    FROM blood_requests r
-                                    LEFT JOIN donors d ON r.requester_id = d.donor_id AND r.requester_role = 'donor'
-                                    LEFT JOIN hospitals h ON r.requester_id = h.hospital_id AND r.requester_role = 'hospital'
-                                    WHERE r.request_id = @requestId AND r.requester_id = @hospitalId AND r.requester_role = 'hospital'";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    if (e.CommandName == "ApproveRequest")
                     {
-                        cmd.Parameters.AddWithValue("@requestId", requestId);
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        // Get request details
+                        string selectQuery = @"SELECT requester_id, blood_type, quantity_ml 
+                                              FROM blood_requests 
+                                              WHERE request_id = @requestId AND status = 'pending'";
+                        using (MySqlCommand selectCmd = new MySqlCommand(selectQuery, conn))
                         {
-                            if (reader.Read())
+                            selectCmd.Parameters.AddWithValue("@requestId", requestId);
+                            using (MySqlDataReader reader = selectCmd.ExecuteReader())
                             {
-                                hdnRequestId.Value = reader["request_id"].ToString();
-                                txtRequester.Text = reader["requester_name"].ToString();
-                                txtRequestBloodType.Text = reader["blood_type"].ToString();
-                                txtRequestQuantity.Text = reader["quantity_ml"].ToString();
-                                txtUrgency.Text = reader["urgency"].ToString();
-                                txtReason.Text = reader["reason"].ToString();
-                                ddlRequestStatus.SelectedValue = reader["status"].ToString();
-                                txtRequestNotes.Text = reader["notes"] != DBNull.Value ? reader["notes"].ToString() : "";
-                                if (reader["fulfilled_by_hospital"] != DBNull.Value && reader["fulfilled_by_hospital"].ToString() == Session["UserId"].ToString())
+                                if (!reader.Read())
                                 {
-                                    ddlFulfillHospital.SelectedValue = reader["fulfilled_by_hospital"].ToString();
+                                    ShowMessage("Request not found or already processed.", "danger");
+                                    Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Request ID: {requestId} not found or not pending");
+                                    return;
                                 }
-                                else
+
+                                int requesterId = Convert.ToInt32(reader["requester_id"]);
+                                string bloodType = reader["blood_type"].ToString();
+                                int quantityMl = Convert.ToInt32(reader["quantity_ml"]);
+                                reader.Close();
+
+                                // Check if approving hospital has enough inventory
+                                string inventoryQuery = @"SELECT SUM(quantity_ml) AS total_quantity 
+                                                         FROM blood_inventory 
+                                                         WHERE tested_by_hospital = @hospitalId 
+                                                         AND blood_type = @bloodType 
+                                                         AND status = 'available'";
+                                using (MySqlCommand inventoryCmd = new MySqlCommand(inventoryQuery, conn))
                                 {
-                                    ddlFulfillHospital.SelectedIndex = 0;
+                                    inventoryCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
+                                    inventoryCmd.Parameters.AddWithValue("@bloodType", bloodType);
+                                    object result = inventoryCmd.ExecuteScalar();
+                                    int availableQuantity = result != DBNull.Value ? Convert.ToInt32(result) : 0;
+
+                                    if (availableQuantity < quantityMl)
+                                    {
+                                        ShowMessage($"Insufficient inventory for {bloodType}. Available: {availableQuantity} ml, Required: {quantityMl} ml.", "danger");
+                                        Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Insufficient inventory for request ID: {requestId}, Blood Type: {bloodType}");
+                                        return;
+                                    }
                                 }
-                                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - Loaded request ID: {requestId}");
+
+                                // Update approving hospital's inventory (subtract quantity)
+                                string updateInventoryQuery = @"UPDATE blood_inventory 
+                                                               SET quantity_ml = quantity_ml - @quantity, 
+                                                                   status = CASE WHEN quantity_ml - @quantity <= 0 THEN 'used' ELSE 'available' END
+                                                               WHERE tested_by_hospital = @hospitalId 
+                                                               AND blood_type = @bloodType 
+                                                               AND status = 'available' 
+                                                               LIMIT 1";
+                                using (MySqlCommand updateInventoryCmd = new MySqlCommand(updateInventoryQuery, conn))
+                                {
+                                    updateInventoryCmd.Parameters.AddWithValue("@quantity", quantityMl);
+                                    updateInventoryCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
+                                    updateInventoryCmd.Parameters.AddWithValue("@bloodType", bloodType);
+                                    int rowsAffected = updateInventoryCmd.ExecuteNonQuery();
+
+                                    if (rowsAffected == 0)
+                                    {
+                                        ShowMessage("Failed to update inventory.", "danger");
+                                        Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Failed to update inventory for request ID: {requestId}");
+                                        return;
+                                    }
+                                }
+
+                                // Add to requesting hospital's inventory
+                                string insertInventoryQuery = @"INSERT INTO blood_inventory (blood_type, quantity_ml, donation_date, expiration_date, tested_by_hospital, test_result, status)
+                                                               VALUES (@bloodType, @quantity, CURRENT_DATE, DATE_ADD(CURRENT_DATE, INTERVAL 42 DAY), @requesterId, 'passed', 'available')";
+                                using (MySqlCommand insertInventoryCmd = new MySqlCommand(insertInventoryQuery, conn))
+                                {
+                                    insertInventoryCmd.Parameters.AddWithValue("@bloodType", bloodType);
+                                    insertInventoryCmd.Parameters.AddWithValue("@quantity", quantityMl);
+                                    insertInventoryCmd.Parameters.AddWithValue("@requesterId", requesterId);
+                                    insertInventoryCmd.ExecuteNonQuery();
+                                }
+
+                                // Update request status
+                                string updateRequestQuery = @"UPDATE blood_requests 
+                                                             SET status = 'fulfilled', fulfilled_by_hospital = @hospitalId, fulfilled_at = CURRENT_TIMESTAMP
+                                                             WHERE request_id = @requestId AND status = 'pending'";
+                                using (MySqlCommand updateRequestCmd = new MySqlCommand(updateRequestQuery, conn))
+                                {
+                                    updateRequestCmd.Parameters.AddWithValue("@requestId", requestId);
+                                    updateRequestCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
+                                    int rowsAffected = updateRequestCmd.ExecuteNonQuery();
+
+                                    if (rowsAffected > 0)
+                                    {
+                                        AddNotification(Convert.ToInt32(Session["UserId"]), "Blood Request Approved", $"Approved blood request ID {requestId} for {bloodType}.");
+                                        AddNotification(requesterId, "Blood Request Fulfilled", $"Your blood request ID {requestId} for {bloodType} has been fulfilled.");
+                                        ShowMessage("Blood request approved and inventory updated.", "success");
+                                        LoadRequests();
+                                        Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Approved request ID: {requestId} by hospital ID: {Session["UserId"]}");
+                                    }
+                                    else
+                                    {
+                                        ShowMessage("Failed to approve request. It may already be processed.", "danger");
+                                        Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - No rows affected for request ID: {requestId}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (e.CommandName == "CancelRequest")
+                    {
+                        string query = "UPDATE blood_requests SET status = 'rejected' WHERE request_id = @requestId AND requester_id = @hospitalId AND status = 'pending'";
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@requestId", requestId);
+                            cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                AddNotification(Convert.ToInt32(Session["UserId"]), "Blood Request Cancelled", $"Blood request ID {requestId} has been cancelled.");
+                                ShowMessage("Blood request cancelled successfully.", "success");
+                                LoadRequests();
+                                Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Cancelled request ID: {requestId} for hospital ID: {Session["UserId"]}");
                             }
                             else
                             {
-                                ShowMessage("Request not found or you lack permission to view it.", "danger");
-                                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - Request ID {requestId} not found for hospital ID {Session["UserId"]}");
+                                ShowMessage("Failed to cancel request. It may already be processed.", "danger");
+                                Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - No rows affected for request ID: {requestId}");
                             }
                         }
                     }
@@ -371,256 +335,26 @@ namespace ClinicalBloodBank
             }
             catch (MySqlException ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
-                ShowMessage("Error loading request data: " + ex.Message, "danger");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] LoadRequestData - Error: {ex.Message}");
-                ShowMessage("Error loading request data: " + ex.Message, "danger");
-            }
-        }
-
-        protected void btnProcessRequest_Click(object sender, EventArgs e)
-        {
-            if (!ValidateRequestForm()) return;
-
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
-                    string query = @"UPDATE blood_requests 
-                                    SET status = @status, 
-                                        fulfilled_by_hospital = @hospitalId, 
-                                        patient_details = @notes, 
-                                        fulfilled_at = CASE WHEN @status IN ('approved', 'fulfilled') THEN CURRENT_TIMESTAMP ELSE NULL END
-                                    WHERE request_id = @requestId AND requester_id = @hospitalId AND requester_role = 'hospital'";
-
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@status", ddlRequestStatus.SelectedValue);
-                        cmd.Parameters.AddWithValue("@hospitalId", string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue) ? (object)DBNull.Value : ddlFulfillHospital.SelectedValue);
-                        cmd.Parameters.AddWithValue("@notes", string.IsNullOrEmpty(txtRequestNotes.Text) ? (object)DBNull.Value : txtRequestNotes.Text);
-                        cmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                        if (rowsAffected == 0)
-                        {
-                            ShowMessage("Request not found or you lack permission to update it.", "danger");
-                            Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Request ID {hdnRequestId.Value} not found for hospital ID {Session["UserId"]}");
-                            return;
-                        }
-                    }
-
-                    if (ddlRequestStatus.SelectedValue == "approved" || ddlRequestStatus.SelectedValue == "fulfilled")
-                    {
-                        if (!UpdateInventoryForRequest())
-                        {
-                            string revertQuery = "UPDATE blood_requests SET status = 'pending', fulfilled_by_hospital = NULL, fulfilled_at = NULL WHERE request_id = @requestId AND requester_id = @hospitalId";
-                            using (MySqlCommand revertCmd = new MySqlCommand(revertQuery, conn))
-                            {
-                                revertCmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
-                                revertCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                                revertCmd.ExecuteNonQuery();
-                            }
-                            ShowMessage("Insufficient inventory to fulfill this request. Status reverted to pending.", "danger");
-                            Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Insufficient inventory for request ID {hdnRequestId.Value}");
-                            return;
-                        }
-                    }
-
-                    AddNotification(Convert.ToInt32(Session["UserId"]), "Request Processed",
-                        $"Blood request {hdnRequestId.Value} has been {ddlRequestStatus.SelectedValue}");
-                    ShowMessage("Request processed successfully.", "success");
-                    Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Processed request ID {hdnRequestId.Value}, Status: {ddlRequestStatus.SelectedValue}");
-                    LoadBloodRequests();
-                    ClearForm();
-                }
-            }
-            catch (MySqlException ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
+                Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
                 ShowMessage("Error processing request: " + ex.Message, "danger");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[{DateTime.Now}] btnProcessRequest_Click - Error: {ex.Message}");
+                Debug.WriteLine($"[{DateTime.Now}] gvRequests_RowCommand - Error: {ex.Message}");
                 ShowMessage("Error processing request: " + ex.Message, "danger");
-            }
-        }
-
-        protected void btnClearForm_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                ClearForm();
-                LoadBloodRequests();
-                Debug.WriteLine($"[{DateTime.Now}] btnClearForm_Click - Form cleared");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] btnClearForm_Click - Error: {ex.Message}");
-                ShowMessage("Error clearing form: " + ex.Message, "danger");
             }
         }
 
         private void ClearForm()
         {
-            hdnRequestId.Value = "";
-            txtRequester.Text = "";
-            txtRequestBloodType.Text = "";
-            txtRequestQuantity.Text = "";
-            txtUrgency.Text = "";
+            ddlBloodType.SelectedIndex = 0;
+            txtQuantity.Text = "";
+            ddlUrgency.SelectedIndex = 0;
             txtReason.Text = "";
-            ddlRequestStatus.SelectedIndex = 0;
-            ddlFulfillHospital.SelectedIndex = 0;
-            txtRequestNotes.Text = "";
-            Debug.WriteLine($"[{DateTime.Now}] ClearForm - Form fields reset");
+            txtPatientDetails.Text = "";
         }
 
-        private bool ValidateRequestForm()
-        {
-            if (string.IsNullOrEmpty(hdnRequestId.Value))
-            {
-                ShowMessage("No request selected.", "danger");
-                Debug.WriteLine($"[{DateTime.Now}] ValidateRequestForm - No request selected");
-                return false;
-            }
-            if (string.IsNullOrEmpty(ddlRequestStatus.SelectedValue))
-            {
-                ShowMessage("Status is required.", "danger");
-                Debug.WriteLine($"[{DateTime.Now}] ValidateRequestForm - Status is empty");
-                return false;
-            }
-            if ((ddlRequestStatus.SelectedValue == "approved" || ddlRequestStatus.SelectedValue == "fulfilled") &&
-                string.IsNullOrEmpty(ddlFulfillHospital.SelectedValue))
-            {
-                ShowMessage("Fulfilling hospital is required for approved/fulfilled requests.", "danger");
-                Debug.WriteLine($"[{DateTime.Now}] ValidateRequestForm - Fulfilling hospital required for status {ddlRequestStatus.SelectedValue}");
-                return false;
-            }
-            return true;
-        }
-
-        private bool UpdateInventoryForRequest()
-        {
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
-                    string getRequestQuery = "SELECT blood_type, quantity_ml FROM blood_requests WHERE request_id = @requestId AND requester_id = @hospitalId";
-                    string bloodType;
-                    int quantityNeeded;
-                    using (MySqlCommand cmd = new MySqlCommand(getRequestQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@requestId", hdnRequestId.Value);
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (!reader.Read())
-                            {
-                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Request ID {hdnRequestId.Value} not found for hospital ID {Session["UserId"]}");
-                                return false;
-                            }
-                            bloodType = reader["blood_type"].ToString();
-                            quantityNeeded = Convert.ToInt32(reader["quantity_ml"]);
-                        }
-                    }
-
-                    string checkInventoryQuery = @"SELECT SUM(quantity_ml) as total_quantity 
-                                                  FROM blood_inventory 
-                                                  WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP AND tested_by_hospital = @hospitalId";
-                    using (MySqlCommand cmd = new MySqlCommand(checkInventoryQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@bloodType", bloodType);
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read() && reader["total_quantity"] != DBNull.Value)
-                            {
-                                int totalAvailable = Convert.ToInt32(reader["total_quantity"]);
-                                if (totalAvailable < quantityNeeded)
-                                {
-                                    Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Insufficient inventory: {totalAvailable} ml available, {quantityNeeded} ml needed for hospital ID {Session["UserId"]}");
-                                    return false;
-                                }
-                            }
-                            else
-                            {
-                                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - No available inventory for blood type {bloodType} for hospital ID {Session["UserId"]}");
-                                return false;
-                            }
-                        }
-                    }
-
-                    string findInventoryQuery = @"SELECT inventory_id, quantity_ml 
-                                                 FROM blood_inventory 
-                                                 WHERE blood_type = @bloodType AND status = 'available' AND expiration_date > CURRENT_TIMESTAMP AND tested_by_hospital = @hospitalId
-                                                 ORDER BY expiration_date ASC";
-                    using (MySqlCommand cmd = new MySqlCommand(findInventoryQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@bloodType", bloodType);
-                        cmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read() && quantityNeeded > 0)
-                            {
-                                int inventoryId = Convert.ToInt32(reader["inventory_id"]);
-                                int availableQuantity = Convert.ToInt32(reader["quantity_ml"]);
-                                int quantityToUse = Math.Min(availableQuantity, quantityNeeded);
-
-                                string updateInventoryQuery = @"UPDATE blood_inventory 
-                                                              SET quantity_ml = quantity_ml - @quantity,
-                                                                  status = CASE WHEN quantity_ml - @quantity <= 0 THEN 'used' ELSE 'available' END
-                                                              WHERE inventory_id = @inventoryId AND tested_by_hospital = @hospitalId";
-                                using (MySqlCommand updateCmd = new MySqlCommand(updateInventoryQuery, conn))
-                                {
-                                    updateCmd.Parameters.AddWithValue("@quantity", quantityToUse);
-                                    updateCmd.Parameters.AddWithValue("@inventoryId", inventoryId);
-                                    updateCmd.Parameters.AddWithValue("@hospitalId", Session["UserId"]);
-                                    updateCmd.ExecuteNonQuery();
-                                    Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Updated inventory ID {inventoryId}, used {quantityToUse} ml");
-                                }
-
-                                quantityNeeded -= quantityToUse;
-                            }
-                        }
-                    }
-                    return quantityNeeded == 0;
-                }
-            }
-            catch (MySqlException ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
-                ShowMessage("Error updating inventory: " + ex.Message, "danger");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] UpdateInventoryForRequest - Error: {ex.Message}");
-                ShowMessage("Error updating inventory: " + ex.Message, "danger");
-                return false;
-            }
-        }
-        protected void lnkLogout_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                Debug.WriteLine($"[{DateTime.Now}] lnkLogout_Click - Logging out hospital user, UserId: {Session["UserId"]}");
-                Session.Abandon();
-                Response.Redirect("Login.aspx");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] lnkLogout_Click - Error: {ex.Message}");
-                ShowMessage("Error during logout: " + ex.Message, "danger");
-            }
-        }
-
-        private void AddNotification(int? hospitalId, string title, string message)
+        private void AddNotification(int hospitalId, string title, string message)
         {
             try
             {
@@ -631,7 +365,7 @@ namespace ClinicalBloodBank
                                     VALUES (@hospitalId, @title, @message, 0, CURRENT_TIMESTAMP)";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@hospitalId", hospitalId.HasValue ? (object)hospitalId.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@hospitalId", hospitalId);
                         cmd.Parameters.AddWithValue("@title", title);
                         cmd.Parameters.AddWithValue("@message", message);
                         cmd.ExecuteNonQuery();
@@ -644,11 +378,6 @@ namespace ClinicalBloodBank
                 Debug.WriteLine($"[{DateTime.Now}] AddNotification - MySQL Error: {ex.Message}, ErrorCode: {ex.Number}");
                 ShowMessage("Error adding notification: " + ex.Message, "danger");
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[{DateTime.Now}] AddNotification - Error: {ex.Message}");
-                ShowMessage("Error adding notification: " + ex.Message, "danger");
-            }
         }
 
         private void ShowMessage(string message, string type)
@@ -657,20 +386,6 @@ namespace ClinicalBloodBank
             lblMessage.Text = message;
             pnlMessage.CssClass = "alert alert-" + type;
             Debug.WriteLine($"[{DateTime.Now}] ShowMessage - Displayed message: {message}, Type: {type}");
-        }
-
-        protected override void Render(HtmlTextWriter writer)
-        {
-            foreach (string controlId in controlsToRegister)
-            {
-                ClientScript.RegisterForEventValidation(controlId);
-            }
-            base.Render(writer);
-        }
-
-        protected void Page_PreRender(object sender, EventArgs e)
-        {
-            // Placeholder for future use
         }
     }
 }

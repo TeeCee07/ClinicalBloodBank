@@ -299,9 +299,7 @@
     <a href="ManageAppointments.aspx" class="menu-item">
         <span class="menu-icon">📅</span> Appointments
     </a>
-    <a href="ManageRewards.aspx" class="menu-item">
-        <span class="menu-icon">🎁</span> Manage Rewards
-    </a>
+
     <a href="Reports.aspx" class="menu-item">
         <span class="menu-icon">📊</span> Reports
     </a>

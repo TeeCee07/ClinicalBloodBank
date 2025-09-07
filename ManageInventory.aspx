@@ -1,5 +1,4 @@
-﻿
-<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageInventory.aspx.cs" Inherits="ClinicalBloodBank.ManageInventory" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ManageInventory.aspx.cs" Inherits="ClinicalBloodBank.ManageInventory" %>
 
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -211,6 +210,8 @@
         }
         .alert {
             padding: 12px;
+
+
             border-radius: 6px;
             margin-bottom: 20px;
         }
@@ -241,36 +242,70 @@
             content: " *";
             color: #d32f2f;
         }
-        .pager {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .pager-button {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .pager-button.active {
-            background: #d32f2f;
-            color: white;
-            border-color: #d32f2f;
-        }
-        .text-danger {
-            color: #d32f2f;
-            font-size: 12px;
-            margin-top: 5px;
-            display: block;
-        }
         .form-control[readonly] {
             background-color: #f8f9fa;
             cursor: not-allowed;
         }
     </style>
+    <script type="text/javascript">
+        function updateBloodType() {
+            var donorDropdown = document.getElementById('<%= ddlDonor.ClientID %>');
+            var bloodTypeDropdown = document.getElementById('<%= ddlInventoryBloodType.ClientID %>');
+            var selectedDonor = donorDropdown.value;
+
+            if (selectedDonor === "") {
+                bloodTypeDropdown.value = "";
+                bloodTypeDropdown.disabled = true;
+                console.log('No donor selected, blood type dropdown disabled');
+                return;
+            }
+
+            // Make an AJAX call to get the donor's blood type
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "ManageInventory.aspx/GetDonorBloodType", true);
+            xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            var bloodType = response.d || "";
+                            console.log('Received blood type: ' + bloodType);
+                            if (bloodType && bloodType !== "unknown" && bloodType !== "") {
+                                // Validate blood type against dropdown options
+                                var validBloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+                                if (validBloodTypes.indexOf(bloodType) !== -1) {
+                                    bloodTypeDropdown.value = bloodType;
+                                    bloodTypeDropdown.disabled = true;
+                                    bloodTypeDropdown.className = "form-control";
+                                } else {
+                                    console.warn('Invalid blood type received: ' + bloodType);
+                                    bloodTypeDropdown.value = "";
+                                    bloodTypeDropdown.disabled = true;
+                                    bloodTypeDropdown.className = "form-control";
+                                }
+                            } else {
+                                bloodTypeDropdown.value = "";
+                                bloodTypeDropdown.disabled = false;
+                                bloodTypeDropdown.className = "form-control";
+                            }
+                        } catch (e) {
+                            console.error('Error parsing JSON response: ' + e.message);
+                            bloodTypeDropdown.value = "";
+                            bloodTypeDropdown.disabled = true;
+                            bloodTypeDropdown.className = "form-control";
+                        }
+                    } else {
+                        console.error('AJAX error: ' + xhr.status + ' ' + xhr.statusText);
+                        bloodTypeDropdown.value = "";
+                        bloodTypeDropdown.disabled = true;
+                        bloodTypeDropdown.className = "form-control";
+                    }
+                }
+            };
+            xhr.send(JSON.stringify({ donorId: selectedDonor }));
+        }
+    </script>
 </head>
 <body>
     <form id="form1" runat="server">
@@ -278,7 +313,7 @@
             <div class="sidebar-header">
                 <h3>Clinical Blood Bank</h3>
             </div>
-                       <div class="sidebar-menu">
+            <div class="sidebar-menu">
     <a href="AdminDashboard.aspx" class="menu-item active">
         <span class="menu-icon">🏠</span> Dashboard
     </a>
@@ -300,9 +335,7 @@
     <a href="ManageAppointments.aspx" class="menu-item">
         <span class="menu-icon">📅</span> Appointments
     </a>
-    <a href="ManageRewards.aspx" class="menu-item">
-        <span class="menu-icon">🎁</span> Manage Rewards
-    </a>
+
     <a href="Reports.aspx" class="menu-item">
         <span class="menu-icon">📊</span> Reports
     </a>
@@ -338,6 +371,14 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
+                            <label for="ddlDonor">Donor</label>
+                            <asp:DropDownList ID="ddlDonor" runat="server" CssClass="form-control" 
+                                AutoPostBack="true" OnSelectedIndexChanged="ddlDonor_SelectedIndexChanged" 
+                                onchange="updateBloodType();" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
                             <label for="ddlInventoryBloodType" class="required-field">Blood Type</label>
                             <asp:DropDownList ID="ddlInventoryBloodType" runat="server" CssClass="form-control">
                                 <asp:ListItem Value="">Select Blood Type</asp:ListItem>
@@ -351,43 +392,35 @@
                                 <asp:ListItem Value="O-">O-</asp:ListItem>
                             </asp:DropDownList>
                             <asp:RequiredFieldValidator ID="rfvBloodType" runat="server" ControlToValidate="ddlInventoryBloodType"
-                                ErrorMessage="Blood type is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Blood type is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
                         </div>
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
                             <label for="txtQuantity" class="required-field">Quantity (ml)</label>
                             <asp:TextBox ID="txtQuantity" runat="server" CssClass="form-control" TextMode="Number" />
                             <asp:RequiredFieldValidator ID="rfvQuantity" runat="server" ControlToValidate="txtQuantity"
-                                ErrorMessage="Quantity is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Quantity is required" Display="Dynamic" CssClass="text-danger" />
                             <asp:RegularExpressionValidator ID="revQuantity" runat="server" ControlToValidate="txtQuantity"
-                                ValidationExpression="^[1-9]\d*$" ErrorMessage="Quantity must be a positive integer" Display="Dynamic" CssClass="text-danger"></asp:RegularExpressionValidator>
+                                ValidationExpression="^[1-9]\d*$" ErrorMessage="Quantity must be a positive integer" Display="Dynamic" CssClass="text-danger" />
                         </div>
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
                             <label for="txtDonationDate" class="required-field">Donation Date</label>
                             <asp:TextBox ID="txtDonationDate" runat="server" CssClass="form-control" TextMode="Date" />
                             <asp:RequiredFieldValidator ID="rfvDonationDate" runat="server" ControlToValidate="txtDonationDate"
-                                ErrorMessage="Donation date is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="lblExpirationDate">Expiration Date</label>
-                            <asp:Label ID="lblExpirationDate" runat="server" CssClass="form-control" ReadOnly="true" />
+                                ErrorMessage="Donation date is required" Display="Dynamic" CssClass="text-danger" />
                         </div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="ddlDonor" class="required-field">Donor</label>
-                            <asp:DropDownList ID="ddlDonor" runat="server" CssClass="form-control" />
-                            <asp:RequiredFieldValidator ID="rfvDonor" runat="server" ControlToValidate="ddlDonor"
-                                ErrorMessage="Donor is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                            <label for="lblExpirationDate">Expiration Date</label>
+                            <asp:Label ID="lblExpirationDate" runat="server" CssClass="form-control" ReadOnly="true" />
                         </div>
                     </div>
                     <div class="form-col">
@@ -395,7 +428,7 @@
                             <label for="ddlHospital" class="required-field">Tested By Hospital</label>
                             <asp:DropDownList ID="ddlHospital" runat="server" CssClass="form-control" />
                             <asp:RequiredFieldValidator ID="rfvHospital" runat="server" ControlToValidate="ddlHospital"
-                                ErrorMessage="Hospital is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Hospital is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
                         </div>
                     </div>
                 </div>
@@ -409,7 +442,7 @@
                                 <asp:ListItem Value="failed">Failed</asp:ListItem>
                             </asp:DropDownList>
                             <asp:RequiredFieldValidator ID="rfvTestResult" runat="server" ControlToValidate="ddlTestResult"
-                                ErrorMessage="Test result is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Test result is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
                         </div>
                     </div>
                     <div class="form-col">
@@ -422,7 +455,7 @@
                                 <asp:ListItem Value="expired">Expired</asp:ListItem>
                             </asp:DropDownList>
                             <asp:RequiredFieldValidator ID="rfvStatus" runat="server" ControlToValidate="ddlStatus"
-                                ErrorMessage="Status is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
+                                ErrorMessage="Status is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
                         </div>
                     </div>
                 </div>

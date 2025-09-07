@@ -164,7 +164,7 @@ namespace ClinicalBloodBank
                                  urgency AS Urgency, status AS Status, reason AS Reason, requested_at AS 'Requested At', 
                                  fulfilled_at AS 'Fulfilled At' 
                                  FROM blood_requests 
-                                 WHERE requester_role = 'hospital' AND requester_id = @hospitalId";
+                                 WHERE requester_id = @hospitalId";
                         if (!string.IsNullOrEmpty(ddlBloodType.SelectedValue))
                             query += " AND blood_type = @bloodType";
                         if (!string.IsNullOrEmpty(ddlStatus.SelectedValue))

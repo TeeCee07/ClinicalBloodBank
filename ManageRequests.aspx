@@ -138,6 +138,20 @@
         .btn-secondary:hover {
             background: #1a2530;
         }
+        .btn-danger {
+            background: #c62828;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+        .btn-success {
+            background: #2e7d32;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #1b5e20;
+        }
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -152,39 +166,6 @@
             background: #f8f9fa;
             color: #2c3e50;
             font-weight: 600;
-        }
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .status-active {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-        .status-inactive {
-            background: #ffebee;
-            color: #d32f2f;
-        }
-        .status-pending {
-            background: #fff3e0;
-            color: #ff9800;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .btn-edit {
-            background: #ff9800;
-            color: white;
-        }
-        .btn-edit:hover {
-            background: #f57c00;
         }
         .form-group {
             margin-bottom: 15px;
@@ -222,11 +203,6 @@
             color: #2e7d32;
             border: 1px solid #a5d6a7;
         }
-        .alert-info {
-            background-color: #e3f2fd;
-            color: #0288d1;
-            border: 1px solid #90caf9;
-        }
         .form-row {
             display: flex;
             gap: 15px;
@@ -239,34 +215,11 @@
             content: " *";
             color: #d32f2f;
         }
-        .pager {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .pager-button {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .pager-button.active {
-            background: #d32f2f;
-            color: white;
-            border-color: #d32f2f;
-        }
         .text-danger {
             color: #d32f2f;
             font-size: 12px;
             margin-top: 5px;
             display: block;
-        }
-        .form-control[readonly] {
-            background-color: #f8f9fa;
-            cursor: not-allowed;
         }
     </style>
 </head>
@@ -276,28 +229,28 @@
             <div class="sidebar-header">
                 <h3>Clinical Blood Bank</h3>
             </div>
-                        <div class="sidebar-menu">
-                <a href="HospitalDashboard.aspx" class="menu-item active">
+            <div class="sidebar-menu">
+                <a href="HospitalDashboard.aspx" class="menu-item">
                     <span class="menu-icon">🏠</span> Dashboard
                 </a>
                 <a href="HospitalManageInventory.aspx" class="menu-item">
                     <span class="menu-icon">🩺</span> Blood Inventory
                 </a>
-                <a href="ManageRequests.aspx" class="menu-item">
-                    <span class="menu-icon">📋</span> Blood Requests
+                <a href="ManageRequests.aspx" class="menu-item active">
+                    <span class="menu-icon">🩺</span> Blood Requests
                 </a>
-                <a href="ManageDonationAppointments.aspx" class="menu-item">
-                    <span class="menu-icon">📅</span> Manage Appointments
+                <a href="ManageAppointments.aspx" class="menu-item">
+                    <span class="menu-icon">📅</span> Appointments
                 </a>
                 <a href="HospitalProfile.aspx" class="menu-item">
-                    <span class="menu-icon">🏥</span> Profile
+                    <span class="menu-icon">👤</span> Profile
                 </a>
                 <a href="HospitalReports.aspx" class="menu-item">
                     <span class="menu-icon">📊</span> Reports
                 </a>
-                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click">
+                <a href="Logout.aspx" class="menu-item">
                     <span class="menu-icon">🚪</span> Logout
-                </asp:LinkButton>
+                </a>
             </div>
         </div>
 
@@ -321,84 +274,14 @@
 
             <div class="content-section">
                 <div class="section-header">
-                    <div class="section-title">Process Blood Request</div>
-                </div>
-                <asp:HiddenField ID="hdnRequestId" runat="server" />
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="txtRequester">Requester</label>
-                            <asp:TextBox ID="txtRequester" runat="server" CssClass="form-control" ReadOnly="true" />
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="txtRequestBloodType">Blood Type</label>
-                            <asp:TextBox ID="txtRequestBloodType" runat="server" CssClass="form-control" ReadOnly="true" />
-                        </div>
-                    </div>
+                    <div class="section-title">Create New Blood Request</div>
                 </div>
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="txtRequestQuantity">Quantity (ml)</label>
-                            <asp:TextBox ID="txtRequestQuantity" runat="server" CssClass="form-control" ReadOnly="true" />
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="txtUrgency">Urgency</label>
-                            <asp:TextBox ID="txtUrgency" runat="server" CssClass="form-control" ReadOnly="true" />
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="txtReason">Reason</label>
-                    <asp:TextBox ID="txtReason" runat="server" CssClass="form-control" ReadOnly="true" TextMode="MultiLine" Rows="3" />
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="ddlRequestStatus" class="required-field">Status</label>
-                            <asp:DropDownList ID="ddlRequestStatus" runat="server" CssClass="form-control">
-                                <asp:ListItem Value="pending">Pending</asp:ListItem>
-                                <asp:ListItem Value="approved">Approved</asp:ListItem>
-                                <asp:ListItem Value="rejected">Rejected</asp:ListItem>
-                                <asp:ListItem Value="fulfilled">Fulfilled</asp:ListItem>
-                            </asp:DropDownList>
-                            <asp:RequiredFieldValidator ID="rfvRequestStatus" runat="server" ControlToValidate="ddlRequestStatus"
-                                ErrorMessage="Status is required" Display="Dynamic" CssClass="text-danger"></asp:RequiredFieldValidator>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="ddlFulfillHospital" class="required-field">Fulfilled By Hospital</label>
-                            <asp:DropDownList ID="ddlFulfillHospital" runat="server" CssClass="form-control" />
-                            <asp:RequiredFieldValidator ID="rfvFulfillHospital" runat="server" ControlToValidate="ddlFulfillHospital"
-                                ErrorMessage="Fulfilling hospital is required" Display="Dynamic" CssClass="text-danger" Enabled="false"></asp:RequiredFieldValidator>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="txtRequestNotes">Notes</label>
-                    <asp:TextBox ID="txtRequestNotes" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3" />
-                </div>
-                <div class="form-group">
-                    <asp:Button ID="btnProcessRequest" runat="server" Text="Process Request" CssClass="btn btn-primary" OnClick="btnProcessRequest_Click" />
-                    <asp:Button ID="btnClearForm" runat="server" Text="Clear Form" CssClass="btn btn-secondary" OnClick="btnClearForm_Click" CausesValidation="false" />
-                </div>
-            </div>
-
-            <div class="content-section">
-                <div class="section-header">
-                    <div class="section-title">Filter Blood Requests</div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="ddlFilterBloodType">Blood Type</label>
-                            <asp:DropDownList ID="ddlFilterBloodType" runat="server" CssClass="form-control">
-                                <asp:ListItem Value="">All Blood Types</asp:ListItem>
+                            <label for="ddlBloodType" class="required-field">Blood Type</label>
+                            <asp:DropDownList ID="ddlBloodType" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="">Select Blood Type</asp:ListItem>
                                 <asp:ListItem Value="A+">A+</asp:ListItem>
                                 <asp:ListItem Value="A-">A-</asp:ListItem>
                                 <asp:ListItem Value="B+">B+</asp:ListItem>
@@ -408,92 +291,79 @@
                                 <asp:ListItem Value="O+">O+</asp:ListItem>
                                 <asp:ListItem Value="O-">O-</asp:ListItem>
                             </asp:DropDownList>
+                            <asp:RequiredFieldValidator ID="rfvBloodType" runat="server" ControlToValidate="ddlBloodType"
+                                ErrorMessage="Blood type is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
                         </div>
                     </div>
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="ddlFilterStatus">Status</label>
-                            <asp:DropDownList ID="ddlFilterStatus" runat="server" CssClass="form-control">
-                                <asp:ListItem Value="">All Statuses</asp:ListItem>
-                                <asp:ListItem Value="pending">Pending</asp:ListItem>
-                                <asp:ListItem Value="approved">Approved</asp:ListItem>
-                                <asp:ListItem Value="rejected">Rejected</asp:ListItem>
-                                <asp:ListItem Value="fulfilled">Fulfilled</asp:ListItem>
-                            </asp:DropDownList>
+                            <label for="txtQuantity" class="required-field">Quantity (ml)</label>
+                            <asp:TextBox ID="txtQuantity" runat="server" CssClass="form-control" TextMode="Number" />
+                            <asp:RequiredFieldValidator ID="rfvQuantity" runat="server" ControlToValidate="txtQuantity"
+                                ErrorMessage="Quantity is required" Display="Dynamic" CssClass="text-danger" />
+                            <asp:RangeValidator ID="rvQuantity" runat="server" ControlToValidate="txtQuantity"
+                                ErrorMessage="Quantity must be between 100 and 1000 ml" Display="Dynamic" CssClass="text-danger"
+                                MinimumValue="100" MaximumValue="1000" Type="Integer" />
                         </div>
                     </div>
+                </div>
+                <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="ddlFilterUrgency">Urgency</label>
-                            <asp:DropDownList ID="ddlFilterUrgency" runat="server" CssClass="form-control">
-                                <asp:ListItem Value="">All Urgencies</asp:ListItem>
+                            <label for="ddlUrgency" class="required-field">Urgency</label>
+                            <asp:DropDownList ID="ddlUrgency" runat="server" CssClass="form-control">
+                                <asp:ListItem Value="">Select Urgency</asp:ListItem>
                                 <asp:ListItem Value="low">Low</asp:ListItem>
                                 <asp:ListItem Value="medium">Medium</asp:ListItem>
                                 <asp:ListItem Value="high">High</asp:ListItem>
+                                <asp:ListItem Value="critical">Critical</asp:ListItem>
                             </asp:DropDownList>
+                            <asp:RequiredFieldValidator ID="rfvUrgency" runat="server" ControlToValidate="ddlUrgency"
+                                ErrorMessage="Urgency is required" Display="Dynamic" CssClass="text-danger" InitialValue="" />
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="txtReason" class="required-field">Reason</label>
+                            <asp:TextBox ID="txtReason" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3" />
+                            <asp:RequiredFieldValidator ID="rfvReason" runat="server" ControlToValidate="txtReason"
+                                ErrorMessage="Reason is required" Display="Dynamic" CssClass="text-danger" />
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <asp:Button ID="btnFilter" runat="server" Text="Apply Filter" CssClass="btn btn-primary" OnClick="btnFilter_Click" />
-                    <asp:Button ID="btnClearFilter" runat="server" Text="Clear Filter" CssClass="btn btn-secondary" OnClick="btnClearFilter_Click" CausesValidation="false" />
+                    <label for="txtPatientDetails">Patient Details (Optional)</label>
+                    <asp:TextBox ID="txtPatientDetails" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3" />
+                </div>
+                <div class="form-group">
+                    <asp:Button ID="btnCreateRequest" runat="server" Text="Create Request" CssClass="btn btn-primary" OnClick="btnCreateRequest_Click" />
                 </div>
             </div>
 
             <div class="content-section">
                 <div class="section-header">
-                    <div class="section-title">Blood Requests List</div>
+                    <div class="section-title">Blood Requests</div>
                 </div>
-                <asp:GridView ID="gvBloodRequests" runat="server" AutoGenerateColumns="False" CssClass="table" DataKeyNames="request_id"
-                    OnRowEditing="gvBloodRequests_RowEditing" OnPageIndexChanging="gvBloodRequests_PageIndexChanging" OnRowDataBound="gvBloodRequests_RowDataBound"
-                    AllowPaging="True" PageSize="10">
+                <asp:GridView ID="gvRequests" runat="server" AutoGenerateColumns="False" CssClass="table" AllowPaging="True" PageSize="10" OnPageIndexChanging="gvRequests_PageIndexChanging" OnRowCommand="gvRequests_RowCommand">
                     <Columns>
-                        <asp:BoundField DataField="request_id" HeaderText="ID" ReadOnly="True" />
-                        <asp:BoundField DataField="requester_name" HeaderText="Requester" />
-                        <asp:BoundField DataField="blood_type" HeaderText="Blood Type" />
-                        <asp:BoundField DataField="quantity_ml" HeaderText="Quantity (ml)" />
-                        <asp:BoundField DataField="urgency" HeaderText="Urgency" />
-                        <asp:BoundField DataField="reason" HeaderText="Reason" />
-                        <asp:BoundField DataField="requested_at" HeaderText="Requested At" DataFormatString="{0:yyyy-MM-dd HH:mm}" />
-                        <asp:TemplateField HeaderText="Status">
-                            <ItemTemplate>
-                                <span class='status-badge <%# Eval("status").ToString() == "approved" || Eval("status").ToString() == "fulfilled" ? "status-active" : Eval("status").ToString() == "rejected" ? "status-inactive" : "status-pending" %>'>
-                                    <%# Eval("status") %>
-                                </span>
-                            </ItemTemplate>
-                        </asp:TemplateField>
+                        <asp:BoundField DataField="Request ID" HeaderText="Request ID" />
+                        <asp:BoundField DataField="Requester Hospital" HeaderText="Requester Hospital" />
+                        <asp:BoundField DataField="Blood Type" HeaderText="Blood Type" />
+                        <asp:BoundField DataField="Quantity (ml)" HeaderText="Quantity (ml)" />
+                        <asp:BoundField DataField="Urgency" HeaderText="Urgency" />
+                        <asp:BoundField DataField="Status" HeaderText="Status" />
+                        <asp:BoundField DataField="Reason" HeaderText="Reason" />
+                        <asp:BoundField DataField="Requested At" HeaderText="Requested At" DataFormatString="{0:yyyy-MM-dd HH:mm:ss}" />
                         <asp:TemplateField HeaderText="Actions">
                             <ItemTemplate>
-                                <div class="action-buttons">
-                                    <asp:Button ID="btnEdit" runat="server" CommandName="Edit" Text="Process" CssClass="btn btn-sm btn-edit" />
-                                </div>
+                                <asp:Button ID="btnApprove" runat="server" Text="Approve" CssClass="btn btn-success" CommandName="ApproveRequest" CommandArgument='<%# Eval("Request ID") %>' Visible='<%# Eval("Status").ToString() == "pending" && Convert.ToInt32(Eval("Requester ID")) != Convert.ToInt32(Session["UserId"]) %>' />
+                                <asp:Button ID="btnCancel" runat="server" Text="Cancel" CssClass="btn btn-danger" CommandName="CancelRequest" CommandArgument='<%# Eval("Request ID") %>' Visible='<%# Eval("Status").ToString() == "pending" && Convert.ToInt32(Eval("Requester ID")) == Convert.ToInt32(Session["UserId"]) %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
             </div>
         </div>
-
-        <script>
-            function toggleHospitalValidation() {
-                var status = document.getElementById('<%= ddlRequestStatus.ClientID %>').value;
-                var hospitalValidator = document.getElementById('<%= rfvFulfillHospital.ClientID %>');
-                
-                if (status === 'approved' || status === 'fulfilled') {
-                    hospitalValidator.enabled = true;
-                    hospitalValidator.style.display = 'block';
-                } else {
-                    hospitalValidator.enabled = false;
-                    hospitalValidator.style.display = 'none';
-                }
-            }
-            
-            document.getElementById('<%= ddlRequestStatus.ClientID %>').onchange = toggleHospitalValidation;
-
-            window.onload = function () {
-                toggleHospitalValidation();
-            };
-        </script>
     </form>
 </body>
 </html>

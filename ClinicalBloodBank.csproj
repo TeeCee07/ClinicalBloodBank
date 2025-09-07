@@ -254,7 +254,6 @@
     <Content Include="ManageInventory.aspx" />
     <Content Include="ManageAppointments.aspx" />
     <Content Include="ManageRequests.aspx" />
-    <Content Include="ManageRewards.aspx" />
     <Content Include="Register.aspx" />
     <Content Include="Reports.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -436,13 +435,6 @@
     </Compile>
     <Compile Include="ManageRequests.aspx.designer.cs">
       <DependentUpon>ManageRequests.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="ManageRewards.aspx.cs">
-      <DependentUpon>ManageRewards.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="ManageRewards.aspx.designer.cs">
-      <DependentUpon>ManageRewards.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Register.aspx.cs">
