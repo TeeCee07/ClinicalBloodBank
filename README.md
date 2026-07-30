@@ -95,39 +95,29 @@ The system includes an administrative dashboard that provides real-time informat
 
 ## Dashboard
 
-> *(Add your dashboard screenshot here)*
-
 ![Dashboard](screenshots/dashboard.png)
 
 ---
 
 ## Donor Management
 
-> *(Add donor management screenshot here)*
-
 ![Donors](screenshots/donors.png)
 
 ---
 
-## Hospital Management
-
-> *(Add hospital management screenshot here)*
+## Staff Management
 
 ![Hospitals](screenshots/hospitals.png)
 
 ---
 
-## Blood Inventory
-
-> *(Add inventory screenshot here)*
+## Donor Dashboard
 
 ![Inventory](screenshots/inventory.png)
 
 ---
 
-## Blood Requests
-
-> *(Add blood requests screenshot here)*
+## Hospital Reports
 
 ![Requests](screenshots/requests.png)
 
